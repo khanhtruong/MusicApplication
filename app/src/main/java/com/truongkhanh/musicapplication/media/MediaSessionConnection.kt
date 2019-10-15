@@ -2,6 +2,7 @@ package com.truongkhanh.musicapplication.media
 
 import android.content.ComponentName
 import android.content.Context
+import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
@@ -11,14 +12,6 @@ import androidx.lifecycle.MutableLiveData
 class MediaSessionConnection(context: Context, serviceComponent: ComponentName) {
     companion object {
         private var instance: MediaSessionConnection? = null
-
-//        fun getInstance(context: Context, serviceComponent: ComponentName) = if (instance == null) {
-//            MediaSessionConnection(context).also {
-//                instance = it
-//            }
-//        } else {
-//            instance
-//        }
 
         fun getInstance(context: Context, serviceComponent: ComponentName) = instance ?: synchronized(this) {
             instance ?: MediaSessionConnection(context, serviceComponent).also {
