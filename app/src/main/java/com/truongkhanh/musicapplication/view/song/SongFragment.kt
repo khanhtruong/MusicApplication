@@ -1,7 +1,5 @@
 package com.truongkhanh.musicapplication.view.song
 
-import android.content.ComponentName
-import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -10,15 +8,13 @@ import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.truongkhanh.musicapplication.R
 import com.truongkhanh.musicapplication.base.BaseFragment
-import com.truongkhanh.musicapplication.media.MediaSessionConnection
-import com.truongkhanh.musicapplication.media.MusicService
-import com.truongkhanh.musicapplication.model.Song
+import com.truongkhanh.musicapplication.media.Song
 import com.truongkhanh.musicapplication.util.BUNDLE_SONGS
 import com.truongkhanh.musicapplication.util.getSongViewModelFactory
 import com.truongkhanh.musicapplication.view.song.adapter.SongAdapter
 import kotlinx.android.synthetic.main.layout_songs.*
 
-class SongFragment: BaseFragment(), SongAdapter.ItemClick {
+class SongFragment: BaseFragment() {
     private var songs: ArrayList<Song>? = null
     private var songAdapter: SongAdapter? = null
     private lateinit var viewModel: SongFragmentViewModel
@@ -57,14 +53,9 @@ class SongFragment: BaseFragment(), SongAdapter.ItemClick {
     private fun initRecyclerView() {
         val layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
         rvSongs.layoutManager = layoutManager
-        songAdapter = SongAdapter(this)
-        songAdapter?.let{
-            it.setSongs(songs)
-            rvSongs.adapter = it
+        songAdapter = SongAdapter{itemClickEvent ->
+
         }
-    }
-
-    override fun onItemClickEvent(position: Int, song: Song) {
-
+        rvSongs.adapter = songAdapter
     }
 }

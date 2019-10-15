@@ -9,6 +9,8 @@ import android.media.AudioManager
 import android.media.session.PlaybackState
 import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
+import android.support.v4.media.MediaBrowserCompat.MediaItem
+import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
@@ -16,9 +18,16 @@ import android.support.v4.media.session.PlaybackStateCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.media.MediaBrowserServiceCompat
+import com.google.android.exoplayer2.*
+import com.google.android.exoplayer2.audio.AudioAttributes
+import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
+import com.google.android.exoplayer2.ext.mediasession.TimelineQueueNavigator
+import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
+import com.google.android.exoplayer2.util.Util
+import com.truongkhanh.musicapplication.model.MusicSource
 import com.truongkhanh.musicapplication.util.MUSIC_SERVICE
-import com.truongkhanh.musicapplication.util.NOW_PLAYING_CHANNEL
 import com.truongkhanh.musicapplication.util.NOW_PLAYING_NOTIFICATION
+import com.truongkhanh.musicapplication.util.flag
 
 private const val MY_MEDIA_ROOT_ID = "media_root_id"
 private const val MY_EMPTY_MEDIA_ROOT_ID = "empty_root_id"
@@ -31,21 +40,48 @@ class MusicService() : MediaBrowserServiceCompat() {
     private lateinit var notificationManager: NotificationManagerCompat
     private lateinit var notificationBuilder: NotificationBuilder
     private lateinit var becomingNoisyReceiver: BecomingNoisyReceiver
+    private lateinit var musicSource: MusicSource
+    private lateinit var mediaSessionConnector: MediaSessionConnector
 
-    private var isActive: Boolean = false
-    private lateinit var stateBuilder: PlaybackState.Builder
     private var isForegroundService = false
+
+    private val mAudioAttributes = AudioAttributes.Builder()
+        .setContentType(C.CONTENT_TYPE_MUSIC)
+        .setUsage(C.USAGE_MEDIA)
+        .build()
+
+    private val exoPlayer: ExoPlayer by lazy {
+        ExoPlayerFactory.newSimpleInstance(this).apply {
+            setAudioAttributes(mAudioAttributes, true)
+        }
+    }
 
     override fun onLoadChildren(
         parentId: String,
-        result: Result<MutableList<MediaBrowserCompat.MediaItem>>
+        result: Result<MutableList<MediaItem>>
     ) {
         if (MY_EMPTY_MEDIA_ROOT_ID == parentId) {
             result.sendResult(null)
             return
         }
 
+        val results = musicSource.whenReady {success ->
+            if (success) {
+                val childrens = musicSource.map {mediaMetadataCompat ->
+                    MediaItem(
+                        mediaMetadataCompat.description,
+                        mediaMetadataCompat.flag
+                    )
+                }.toMutableList()
+                result.sendResult(childrens)
+            } else {
+                result.sendResult(null)
+            }
+        }
 
+        if (!results) {
+            result.detach()
+        }
     }
 
     override fun onGetRoot(
@@ -53,15 +89,9 @@ class MusicService() : MediaBrowserServiceCompat() {
         clientUid: Int,
         rootHints: Bundle?
     ): BrowserRoot? {
-        // (Optional) Control the level of access for the specified package name.
-        // You'll need to write your own logic to do this.
         return if (allowBrowsing(clientPackageName, clientUid)) {
-            // Returns a root ID that clients can use with onLoadChildren() to retrieve
-            // the content hierarchy.
             BrowserRoot(MY_MEDIA_ROOT_ID, null)
         } else {
-            // Clients can connect, but this BrowserRoot is an empty hierachy
-            // so onLoadChildren returns nothing. This disables the ability to browse for content.
             BrowserRoot(MY_EMPTY_MEDIA_ROOT_ID, null)
         }
     }
@@ -72,7 +102,6 @@ class MusicService() : MediaBrowserServiceCompat() {
 
     override fun onCreate() {
         super.onCreate()
-
         val sessionActivityPendingIntent =
             packageManager?.getLaunchIntentForPackage(packageName)?.let { sessionIntent ->
                 PendingIntent.getActivity(this, 0, sessionIntent, 0)
@@ -93,9 +122,24 @@ class MusicService() : MediaBrowserServiceCompat() {
         notificationManager = NotificationManagerCompat.from(this)
         becomingNoisyReceiver = BecomingNoisyReceiver(this, mediaSession.sessionToken)
 
-        //TODO: Get the music playlist or some how passing music playlist to service
+        musicSource = GetMusicHelper(this)
+        musicSource.load()
 
+        mediaSessionConnector = MediaSessionConnector(mediaSession).also {connector ->
+            val dataSourceFactory = DefaultDataSourceFactory(
+                this, Util.getUserAgent(this, EXO_USER_AGENT), null
+            )
 
+            val playbackPreparer = PlaybackPreparer(
+                musicSource,
+                exoPlayer,
+                dataSourceFactory
+            )
+
+            connector.setPlayer(exoPlayer)
+            connector.setPlaybackPreparer(playbackPreparer)
+            connector.setQueueNavigator(QueueNavigator(mediaSession))
+        }
     }
 
     private inner class MediaControllerCallback : MediaControllerCompat.Callback() {
@@ -190,8 +234,18 @@ class MusicService() : MediaBrowserServiceCompat() {
                 controller.transportControls.pause()
             }
         }
-
     }
-
-
 }
+
+private class QueueNavigator(
+    mediaSession: MediaSessionCompat
+) : TimelineQueueNavigator(mediaSession) {
+    private val window = Timeline.Window()
+    override fun getMediaDescription(player: Player, windowIndex: Int): MediaDescriptionCompat =
+        player.currentTimeline
+            .getWindow(windowIndex, window, true).tag as MediaDescriptionCompat
+}
+
+const val GET_MUSIC_FAILED = "com.truongkhanh.musicapplication.media.getmusicfailed"
+
+private const val EXO_USER_AGENT = "exoAgent"

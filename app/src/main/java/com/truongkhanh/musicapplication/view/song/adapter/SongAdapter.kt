@@ -1,42 +1,53 @@
 package com.truongkhanh.musicapplication.view.song.adapter
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.ListAdapter
+import com.bumptech.glide.Glide
 import com.truongkhanh.musicapplication.R
-import com.truongkhanh.musicapplication.model.Song
+import com.truongkhanh.musicapplication.model.MediaItemData
+import com.truongkhanh.musicapplication.model.MediaItemData.Companion.PLAYBACK_RES_CHANGED
 
-class SongAdapter(private val listener: ItemClick): RecyclerView.Adapter<SongViewHolder>() {
-    private lateinit var songs: ArrayList<Song>
+class SongAdapter(private val itemClickListener: (MediaItemData) -> Unit): ListAdapter<MediaItemData, SongViewHolder>(MediaItemData.diffCallback) {
+
+    override fun onBindViewHolder(holder: SongViewHolder, position: Int) {
+        onBindViewHolder(holder, position, mutableListOf())
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SongViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_song, parent, false)
-        return SongViewHolder(view)
+        return SongViewHolder(view, itemClickListener)
     }
 
-    override fun getItemCount(): Int {
-        if (songs.size < 0)
-            return 0
-        return songs.size
-    }
+    override fun onBindViewHolder(
+        holder: SongViewHolder,
+        position: Int,
+        payloads: MutableList<Any>
+    ) {
+        super.onBindViewHolder(holder, position, payloads)
+        val mediaItem = getItem(position)
+        var fullRefresh = payloads.isEmpty()
 
-    override fun onBindViewHolder(holder: SongViewHolder, position: Int) {
-        songs.getOrNull(position)?.let{song ->
-            holder.onBind(song)
-            holder.itemView.setOnClickListener {
-                listener.onItemClickEvent(position, song)
+        if (payloads.isNotEmpty()) {
+            payloads.forEach { payload ->
+                when (payload) {
+                    PLAYBACK_RES_CHANGED -> {
+                        holder.avatar.setImageResource(mediaItem.playbackRes)
+                    }
+                    else -> fullRefresh = true
+                }
             }
         }
-    }
 
-    fun setSongs(newSongs: ArrayList<Song>?) {
-        songs = newSongs?: arrayListOf()
-        notifyDataSetChanged()
-    }
+        if (fullRefresh) {
+            holder.itemData = mediaItem
+            holder.name.text = mediaItem.title
+            holder.artist.text = mediaItem.subtitle
+            holder.album.text = mediaItem.album
 
-    interface ItemClick {
-        fun onItemClickEvent(position: Int, song: Song)
+            Glide.with(holder.avatar)
+                .load(mediaItem.albumArtUri)
+                .into(holder.avatar)
+        }
     }
-
 }
