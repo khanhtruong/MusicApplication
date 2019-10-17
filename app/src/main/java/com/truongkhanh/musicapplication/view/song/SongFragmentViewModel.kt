@@ -1,12 +1,12 @@
 package com.truongkhanh.musicapplication.view.song
 
-import android.app.Application
 import android.content.Context
-import android.net.Uri
-import android.os.Handler
-import android.os.Looper
+import android.graphics.BitmapFactory
+import android.support.v4.media.MediaBrowserCompat
+import android.support.v4.media.MediaBrowserCompat.SubscriptionCallback
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.PlaybackStateCompat
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
@@ -15,104 +15,113 @@ import com.truongkhanh.musicapplication.R
 import com.truongkhanh.musicapplication.media.EMPTY_PLAYBACK_STATE
 import com.truongkhanh.musicapplication.media.MediaSessionConnection
 import com.truongkhanh.musicapplication.media.NOTHING_PLAYING
-import com.truongkhanh.musicapplication.util.*
-import kotlin.math.floor
+import com.truongkhanh.musicapplication.model.MediaItemData
+import com.truongkhanh.musicapplication.util.getUriToResource
+import com.truongkhanh.musicapplication.util.id
+import com.truongkhanh.musicapplication.util.isPlaying
 
-class SongFragmentViewModel(private val application: Application, mediaSessionConnection: MediaSessionConnection): ViewModel() {
+class SongFragmentViewModel(private val context: Context, private val mediaID: String, mediaSessionConnection: MediaSessionConnection): ViewModel() {
 
-    data class NowPlayingMetadata(
-        val id: String,
-        val albumArtUri: Uri,
-        val title: String?,
-        val subtitle: String?,
-        val duration: String
-    ) {
+    private val _mediaItems = MutableLiveData<List<MediaItemData>>()
+    val mediaItems: LiveData<List<MediaItemData>> = _mediaItems
 
-        companion object {
-            /**
-             * Utility method to convert milliseconds to a display of minutes and seconds
-             */
-            fun timestampToMSS(context: Context, position: Long): String {
-                val totalSeconds = floor(position / 1E3).toInt()
-                val minutes = totalSeconds / 60
-                val remainingSeconds = totalSeconds - (minutes * 60)
-                return if (position < 0) context.getString(R.string.duration_unknown)
-                else context.getString(R.string.duration_format).format(minutes, remainingSeconds)
+    private val subscriptionCallback = object : SubscriptionCallback() {
+        override fun onChildrenLoaded(
+            parentId: String,
+            children: MutableList<MediaBrowserCompat.MediaItem>
+        ) {
+            super.onChildrenLoaded(parentId, children)
+            val itemsList = children.map { child ->
+//                val avatarBitmap = child.description.iconBitmap ?: BitmapFactory.decodeResource(context.resources, R.drawable.ic_launcher_foreground)
+                val avatarBitmap = if (child.description.iconBitmap != null) {
+                    child.description.iconBitmap
+                } else {
+                    BitmapFactory.decodeResource(context.resources, R.drawable.ic_launcher_foreground)
+                }
+                val subtitle = child.description.subtitle ?: ""
+                MediaItemData(
+                    child.mediaId!!,
+                    child.description.title.toString(),
+                    subtitle.toString(),
+                    avatarBitmap,
+                    child.isBrowsable,
+                    child.description.description.toString(),
+                    getResourceForMediaId(child.mediaId!!)
+                )
             }
+            _mediaItems.postValue(itemsList)
         }
     }
 
-    private var playbackState = EMPTY_PLAYBACK_STATE
-    private var mediaMetadata = MutableLiveData<NowPlayingMetadata>()
-    private var buttonPlayResource = MutableLiveData<Int>()
-    private var handler: Handler = Handler(Looper.getMainLooper())
-    private var mediaPosition = MutableLiveData<Long>().apply {
-        postValue(0L)
-    }
-    private var isLoopHandler = true
-
-    private val playbackStateForever = Observer<PlaybackStateCompat> {
-        playbackState = it ?: EMPTY_PLAYBACK_STATE
-        val metaData = mediaSessionConnection.mediaMetadata.value ?: NOTHING_PLAYING
-        updateState(playbackState, metaData)
+    private val playbackStateObserver = Observer<PlaybackStateCompat> {
+        val playbackState = it ?: EMPTY_PLAYBACK_STATE
+        val metadata = mediaSessionConnection.mediaMetadata.value ?: NOTHING_PLAYING
+        if (metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID) != null) {
+            _mediaItems.postValue(updateState(playbackState, metadata))
+        }
     }
 
-    private val mediaMetaDataForever = Observer<MediaMetadataCompat> {
-        updateState(playbackState, it)
+    private val mediaMetadataObserver = Observer<MediaMetadataCompat> {
+        val playbackState = mediaSessionConnection.playbackState.value ?: EMPTY_PLAYBACK_STATE
+        val metadata = it ?: NOTHING_PLAYING
+        if (metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID) != null) {
+            _mediaItems.postValue(updateState(playbackState, metadata))
+        }
     }
 
     private val mediaSessionConnection = mediaSessionConnection.also {
-        it.playbackState.observeForever(playbackStateForever)
-        it.mediaMetadata.observeForever(mediaMetaDataForever)
-        updatePlayPosition()
-    }
+        it.subscribe(mediaID, subscriptionCallback)
 
-    private fun updatePlayPosition():Boolean = handler.postDelayed({
-        val currentPosition = playbackState.currentPlaybackPosition
-        if(mediaPosition.value != currentPosition)
-            mediaPosition.postValue(currentPosition)
-        if(isLoopHandler)
-            updatePlayPosition()
-    }, POSITION_UPDATE_INTERVAL_MILLIS)
-
-    private fun updateState(
-        playbackState: PlaybackStateCompat,
-        mediaMetaData: MediaMetadataCompat
-    ) {
-        if (mediaMetaData.duration != 0L) {
-            val nowPlayingMetadata = NowPlayingMetadata(
-                mediaMetaData.id,
-                mediaMetaData.albumArtUri,
-                mediaMetaData.title?.trim(),
-                mediaMetaData.displaySubtitle?.trim(),
-                NowPlayingMetadata.timestampToMSS(application, mediaMetaData.duration)
-            )
-            this.mediaMetadata.postValue(nowPlayingMetadata)
-
-            buttonPlayResource.postValue(
-                when(playbackState.isPlaying) {
-                    true -> R.drawable.ic_pause_black_24dp
-                    else -> R.drawable.ic_play_arrow_black_24dp
-                }
-            )
-        }
+        it.playbackState.observeForever(playbackStateObserver)
+        it.mediaMetadata.observeForever(mediaMetadataObserver)
     }
 
     override fun onCleared() {
         super.onCleared()
-        mediaSessionConnection.playbackState.removeObserver(playbackStateForever)
-        mediaSessionConnection.mediaMetadata.removeObserver(mediaMetaDataForever)
 
-        //Stop looping update position
-        isLoopHandler = false
+        mediaSessionConnection.playbackState.removeObserver(playbackStateObserver)
+        mediaSessionConnection.mediaMetadata.removeObserver(mediaMetadataObserver)
+
+        mediaSessionConnection.unSubscribe(mediaID, subscriptionCallback)
     }
 
-    class Factory(private var application: Application, private var mediaSessionConnection: MediaSessionConnection): ViewModelProvider.NewInstanceFactory() {
-        @Suppress("UNCHECKED_CAST")
+    private fun updateState(
+        playbackState: PlaybackStateCompat,
+        mediaMetadata: MediaMetadataCompat
+    ): List<MediaItemData> {
+
+        val newResId = when (playbackState.isPlaying) {
+            true -> R.drawable.ic_pause_black_24dp
+            else -> R.drawable.ic_play_arrow_black_24dp
+        }
+
+        return mediaItems.value?.map {
+            val useResId = if (it.mediaId == mediaMetadata.id) newResId else NO_RES
+            it.copy(playbackRes = useResId)
+        } ?: emptyList()
+    }
+
+    private fun getResourceForMediaId(mediaId: String): Int {
+        val isActive = mediaId == mediaSessionConnection.mediaMetadata.value?.id
+        val isPlaying = mediaSessionConnection.playbackState.value?.isPlaying ?: false
+        return when {
+            !isActive -> NO_RES
+            isPlaying -> R.drawable.ic_pause_black_24dp
+            else -> R.drawable.ic_play_arrow_black_24dp
+        }
+    }
+
+    class Factory(
+        private val context: Context,
+        private val mediaId: String,
+        private val mediaSessionConnection: MediaSessionConnection
+    ) : ViewModelProvider.NewInstanceFactory() {
+
+        @Suppress("unchecked_cast")
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-            return SongFragmentViewModel(application, mediaSessionConnection) as T
+            return SongFragmentViewModel(context, mediaId, mediaSessionConnection) as T
         }
     }
 }
 
-private const val POSITION_UPDATE_INTERVAL_MILLIS = 100L
+private const val NO_RES = 0

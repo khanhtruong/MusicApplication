@@ -67,22 +67,20 @@ class NotificationBuilder(private var context: Context) {
         val playbackState = controller.playbackState
 
         val builder = NotificationCompat.Builder(context, NOW_PLAYING_CHANNEL)
-        var playPauseIndex = 0
 
-        if (playbackState.isSkipToPreviousEnable) {
+        var playPauseIndex = 0
+        if (playbackState.isSkipToPreviousEnabled) {
             builder.addAction(previousAction)
             ++playPauseIndex
         }
 
         if (playbackState.isPlaying) {
             builder.addAction(pauseAction)
-        }
-
-        if (playbackState.isPlayEnable) {
+        } else if (playbackState.isPlayEnable) {
             builder.addAction(playAction)
         }
 
-        if (playbackState.isSkipToNextEnable) {
+        if (playbackState.isSkipToNextEnabled) {
             builder.addAction(nextAction)
         }
 
@@ -90,7 +88,7 @@ class NotificationBuilder(private var context: Context) {
             .setCancelButtonIntent(stopPendingIntent)
             .setMediaSession(sessionToken)
             .setShowActionsInCompactView(playPauseIndex)
-            .setShowCancelButton(true)
+
 
         return builder.setContentIntent(controller.sessionActivity)
             .setContentText(description.subtitle)

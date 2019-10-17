@@ -1,5 +1,6 @@
 package com.truongkhanh.musicapplication.model
 
+import android.graphics.Bitmap
 import android.net.Uri
 import androidx.recyclerview.widget.DiffUtil
 
@@ -7,7 +8,7 @@ data class MediaItemData(
     val mediaId: String,
     val title: String,
     val subtitle: String,
-    val albumArtUri: Uri,
+    val avatarBitmap: Bitmap?,
     val browsable: Boolean,
     val album: String,
     var playbackRes: Int) {

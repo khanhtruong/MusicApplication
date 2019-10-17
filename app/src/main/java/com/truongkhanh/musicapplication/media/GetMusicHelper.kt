@@ -1,7 +1,6 @@
 package com.truongkhanh.musicapplication.media
 
 import android.content.Context
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import android.os.Parcel
@@ -10,9 +9,11 @@ import android.support.v4.media.MediaMetadataCompat
 import android.provider.MediaStore
 import android.support.v4.media.MediaDescriptionCompat
 import androidx.core.net.toUri
+import com.truongkhanh.musicapplication.R
 import com.truongkhanh.musicapplication.model.AbstractMusicSource
 import com.truongkhanh.musicapplication.model.STATE_ERROR
 import com.truongkhanh.musicapplication.model.STATE_INITIALIZED
+import com.truongkhanh.musicapplication.model.STATE_INITIALIZING
 import com.truongkhanh.musicapplication.util.*
 import java.util.concurrent.TimeUnit
 
@@ -20,6 +21,12 @@ import java.util.concurrent.TimeUnit
 class GetMusicHelper(private val context: Context): AbstractMusicSource() {
 
     private var listMusic: List<MediaMetadataCompat> = emptyList()
+
+    init {
+        state = STATE_INITIALIZING
+    }
+
+    override fun iterator(): Iterator<MediaMetadataCompat> = listMusic.iterator()
 
     override fun load() {
         getMusicFromExternal(context)?.let{listMusic ->
@@ -30,8 +37,6 @@ class GetMusicHelper(private val context: Context): AbstractMusicSource() {
             state = STATE_ERROR
         }
     }
-
-    override fun iterator(): Iterator<MediaMetadataCompat> = listMusic.iterator()
 
     fun getMusicFromExternal(context: Context): List<MediaMetadataCompat>? {
         val externalUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
@@ -52,7 +57,7 @@ class GetMusicHelper(private val context: Context): AbstractMusicSource() {
                         cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA))
                     val album =
                         cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM))
-                    songs.add(Song(id, name, artist, album, uri, null))
+                    songs.add(Song(id, name, artist, album, uri))
                 } while (cursor.moveToNext())
             }
             cursor.close()
@@ -71,16 +76,14 @@ data class Song(
     var title: String?,
     var artist: String?,
     var album: String?,
-    var source: String?,
-    var image: Bitmap?
+    var source: String?
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readString(),
         parcel.readString(),
         parcel.readString(),
         parcel.readString(),
-        parcel.readString(),
-        parcel.readValue(Bitmap::class.java.classLoader) as Bitmap?
+        parcel.readString()
     ) {
     }
 
@@ -90,7 +93,6 @@ data class Song(
         parcel.writeString(artist)
         parcel.writeString(album)
         parcel.writeString(source)
-        parcel.writeValue(image)
     }
 
     override fun describeContents(): Int {
@@ -115,7 +117,15 @@ fun MediaMetadataCompat.Builder.from(context: Context, song: Song): MediaMetadat
     val mDuration = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
 
     val byteArray = mediaMetadataRetriever.embeddedPicture
-    val imageBitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
+    displayIcon = if (byteArray != null) {
+        val imageBitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
+        imageBitmap
+    } else {
+        val imageBitmap = BitmapFactory.decodeResource(context.resources, R.drawable.ic_launcher_foreground)
+        imageBitmap
+    }
+    displayIconUri = getUriToResource(context, R.drawable.ic_launcher_foreground).toString()
+
 
     song.id?.let {id = it}
     song.artist?.let {
@@ -132,7 +142,6 @@ fun MediaMetadataCompat.Builder.from(context: Context, song: Song): MediaMetadat
         displayTitle = it
     }
     duration = TimeUnit.SECONDS.toMillis(mDuration.toLong())
-    albumArt = imageBitmap
 
     downloadStatus = MediaDescriptionCompat.STATUS_NOT_DOWNLOADED
 
