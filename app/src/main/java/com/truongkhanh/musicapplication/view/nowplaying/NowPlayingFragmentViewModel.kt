@@ -12,6 +12,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.google.android.exoplayer2.Player
 import com.truongkhanh.musicapplication.R
 import com.truongkhanh.musicapplication.media.EMPTY_PLAYBACK_STATE
 import com.truongkhanh.musicapplication.media.MediaSessionConnection
@@ -48,6 +49,11 @@ class NowPlayingFragmentViewModel(private val application: Application, mediaSes
         postValue(0L)
     }
     var buttonPlayResource = MutableLiveData<Int>()
+    var totalPosition = MutableLiveData<Long>().apply {
+        postValue(0L)
+    }
+    var buttonNextEnable = MutableLiveData<Boolean>()
+    var buttonPreviousEnable = MutableLiveData<Boolean>()
 
     private var playbackState = EMPTY_PLAYBACK_STATE
     private var handler: Handler = Handler(Looper.getMainLooper())
@@ -94,13 +100,43 @@ class NowPlayingFragmentViewModel(private val application: Application, mediaSes
                     )
                 )
             this.mediaMetadata.postValue(nowPlayingMetadata)
-
+            this.totalPosition.postValue(mediaMetaData.duration)
             buttonPlayResource.postValue(
                 when(playbackState.isPlaying) {
                     true -> R.drawable.ic_pause_black_24dp
                     else -> R.drawable.ic_play_arrow_black_24dp
                 }
             )
+            buttonNextEnable.postValue(playbackState.isSkipToNextEnabled)
+            buttonPreviousEnable.postValue(playbackState.isSkipToPreviousEnabled)
+        }
+    }
+
+    fun updatePosition(newPosition: Long) {
+        mediaSessionConnection.transportControls.seekTo(newPosition)
+    }
+
+    fun changeRepeatMode(newRepeatMode: Int) {
+        mediaSessionConnection.transportControls.setRepeatMode(newRepeatMode)
+    }
+
+    fun changeShuffleMode(newShuffleMode: Int) {
+        mediaSessionConnection.transportControls.setShuffleMode(newShuffleMode)
+    }
+
+    fun playNext() {
+        mediaSessionConnection.transportControls.skipToNext()
+    }
+
+    fun playPrevious() {
+        mediaSessionConnection.transportControls.skipToPrevious()
+    }
+
+    fun playOrPause() {
+        if(playbackState.isPlaying) {
+            mediaSessionConnection.transportControls.pause()
+        } else if (playbackState.isPauseEnable) {
+            mediaSessionConnection.transportControls.play()
         }
     }
 

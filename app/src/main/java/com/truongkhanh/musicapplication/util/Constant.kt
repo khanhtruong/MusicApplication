@@ -10,3 +10,6 @@ const val NOW_PLAYING_NOTIFICATION: Int = 0xb339
 
 const val BUNDLE_SONGS = "bundleSongs"
 const val BUNDLE_MEDIA_ID = "bundleMediaID"
+
+const val COLOR_ACCENT = "#2196F3"
+const val COLOR_LIGHT_GRAY = "#333350"

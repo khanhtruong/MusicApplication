@@ -17,6 +17,8 @@ class NowPlayingActivity : BaseAppBarActivity() {
             }
             setFragment(nowPlayingFragment)
         }
+        setDisplayHomeAsUpEnabled(true)
+        setToolbarTitle(getString(R.string.toolbar_tile_now_playing))
     }
 
     private fun setFragment(nowPlayingFragment: NowPlayingFragment) {

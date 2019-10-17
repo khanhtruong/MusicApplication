@@ -141,7 +141,7 @@ fun MediaMetadataCompat.Builder.from(context: Context, song: Song): MediaMetadat
         title = it
         displayTitle = it
     }
-    duration = TimeUnit.SECONDS.toMillis(mDuration.toLong())
+    duration = mDuration.toLong()
 
     downloadStatus = MediaDescriptionCompat.STATUS_NOT_DOWNLOADED
 
