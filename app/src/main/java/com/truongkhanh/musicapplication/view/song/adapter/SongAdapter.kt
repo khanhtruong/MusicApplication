@@ -24,7 +24,6 @@ class SongAdapter(private val itemClickListener: (MediaItemData) -> Unit): ListA
         position: Int,
         payloads: MutableList<Any>
     ) {
-        super.onBindViewHolder(holder, position, payloads)
         val mediaItem = getItem(position)
         var fullRefresh = payloads.isEmpty()
 
@@ -32,7 +31,11 @@ class SongAdapter(private val itemClickListener: (MediaItemData) -> Unit): ListA
             payloads.forEach { payload ->
                 when (payload) {
                     PLAYBACK_RES_CHANGED -> {
-                        holder.avatar.setImageResource(mediaItem.playbackRes)
+//                        holder.state.setImageResource(mediaItem.playbackRes)
+                        Glide.with(holder.itemView)
+                            .load(mediaItem.playbackRes)
+                            .into(holder.state)
+
                     }
                     else -> fullRefresh = true
                 }
@@ -45,9 +48,15 @@ class SongAdapter(private val itemClickListener: (MediaItemData) -> Unit): ListA
             holder.artist.text = mediaItem.subtitle
             holder.album.text = mediaItem.album
 
-            Glide.with(holder.avatar)
-                .load(mediaItem.albumArtUri)
+            Glide.with(holder.itemView)
+                .load(mediaItem.avatarBitmap)
+                .placeholder(R.drawable.ic_launcher_foreground)
                 .into(holder.avatar)
+
+//            holder.state.setImageResource(mediaItem.playbackRes)
+            Glide.with(holder.itemView)
+                .load(mediaItem.playbackRes)
+                .into(holder.state)
         }
     }
 }

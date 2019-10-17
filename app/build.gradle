@@ -20,6 +20,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    compileOptions { targetCompatibility JavaVersion.VERSION_1_8 }
 }
 
 dependencies {
@@ -46,10 +47,17 @@ dependencies {
     implementation 'com.google.android.material:material:1.1.0-alpha10'
 
     api "androidx.media:media:1.1.0"
-    api "com.google.android.exoplayer:exoplayer-core:$exoplayer_version"
-    api "com.google.android.exoplayer:exoplayer-ui:$exoplayer_version"
-    api "com.google.android.exoplayer:extension-mediasession:$exoplayer_version"
+
+    if (findProject(':exoplayer-library-core') != null) {
+        api project(':exoplayer-library-core')
+        api project(':exoplayer-library-ui')
+        api project(':exoplayer-extension-mediasession')
+    } else {
+        api "com.google.android.exoplayer:exoplayer-core:$exoplayer_version"
+        api "com.google.android.exoplayer:exoplayer-ui:$exoplayer_version"
+        api "com.google.android.exoplayer:extension-mediasession:$exoplayer_version"
+    }
 
     implementation "com.github.bumptech.glide:glide:$glide_version"
-    implementation "com.github.bumptech.glide:compiler:$glide_version"
+    annotationProcessor "com.github.bumptech.glide:compiler:$glide_version"
 }

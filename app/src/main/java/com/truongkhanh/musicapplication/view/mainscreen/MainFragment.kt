@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
 import com.google.android.material.bottomnavigation.BottomNavigationMenu
@@ -18,6 +19,7 @@ import com.truongkhanh.musicapplication.R
 import com.truongkhanh.musicapplication.base.BaseFragment
 import com.truongkhanh.musicapplication.media.GetMusicHelper
 import com.truongkhanh.musicapplication.util.BOTTOM_NAVIGATION_TAG
+import com.truongkhanh.musicapplication.util.BUNDLE_MEDIA_ID
 import com.truongkhanh.musicapplication.util.REQUEST_PERMISSION_CODE
 import com.truongkhanh.musicapplication.util.getMainFragmentViewModelFactory
 import com.truongkhanh.musicapplication.view.album.AlbumFragment
@@ -27,26 +29,35 @@ import kotlinx.android.synthetic.main.fragment_main.*
 
 class MainFragment : BaseFragment() {
 
-    private lateinit var getMusicHelper: GetMusicHelper
     private lateinit var viewModel: MainFragmentViewModel
+    private var isPermissionGranted = false
+    private var rootMediaID: String? = null
 
     private val onNavigationItemSelectedListener =
         BottomNavigationView.OnNavigationItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.navigation_songs -> {
-                    val songFragment = SongFragment.getInstance()
-                    val bundle = Bundle()
-                    goToFragment(songFragment, BOTTOM_NAVIGATION_TAG, true)
+                    if(isPermissionGranted) {
+                        rootMediaID?.let {
+                            val songFragment = SongFragment.getInstance()
+                            val bundle = Bundle()
+                            bundle.putString(BUNDLE_MEDIA_ID, it)
+                            songFragment.arguments = bundle
+                            goToFragment(songFragment, BOTTOM_NAVIGATION_TAG, false)
+                        }
+                    } else {
+                        requestStoragePermission()
+                    }
                     return@OnNavigationItemSelectedListener true
                 }
                 R.id.navigation_artist -> {
                     val artistFragment = ArtistFragment.getInstance()
-                    goToFragment(artistFragment, BOTTOM_NAVIGATION_TAG, true)
+                    goToFragment(artistFragment, BOTTOM_NAVIGATION_TAG, false)
                     return@OnNavigationItemSelectedListener true
                 }
                 R.id.navigation_album -> {
                     val albumFragment = AlbumFragment.getInstance()
-                    goToFragment(albumFragment, BOTTOM_NAVIGATION_TAG, true)
+                    goToFragment(albumFragment, BOTTOM_NAVIGATION_TAG, false)
                     return@OnNavigationItemSelectedListener true
                 }
             }
@@ -60,6 +71,20 @@ class MainFragment : BaseFragment() {
     override fun setUpView(view: View, savedInstanceState: Bundle?) {
         setUpBottomNavigation()
         checkPermissions()
+        bindingViewModel()
+    }
+
+    private fun bindingViewModel() {
+        viewModel.rootMediaID.observe(this, Observer {rootMediaID ->
+            rootMediaID?.let {
+                this.rootMediaID = rootMediaID
+                val songFragment = SongFragment.getInstance()
+                val bundle = Bundle()
+                bundle.putString(BUNDLE_MEDIA_ID, rootMediaID)
+                songFragment.arguments = bundle
+                goToFragment(songFragment, BOTTOM_NAVIGATION_TAG, false)
+            }
+        })
     }
 
     override fun onCreateView(
@@ -75,7 +100,6 @@ class MainFragment : BaseFragment() {
         viewModel = ViewModelProviders
             .of(this, getMainFragmentViewModelFactory(context))
             .get(MainFragmentViewModel::class.java)
-        getMusicHelper = GetMusicHelper(context)
     }
 
     override fun onRequestPermissionsResult(
@@ -87,7 +111,7 @@ class MainFragment : BaseFragment() {
         when(requestCode) {
             REQUEST_PERMISSION_CODE -> {
                 if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                    getMusicFromExternal()
+                    isPermissionGranted = true
                 }
                 return
             }
@@ -106,28 +130,26 @@ class MainFragment : BaseFragment() {
                     Manifest.permission.WRITE_EXTERNAL_STORAGE
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
-                activity?.let {activity ->
-                    ActivityCompat.requestPermissions(
-                        activity,
-                        arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE),
-                        REQUEST_PERMISSION_CODE
-                    )
-                }
+                requestStoragePermission()
             } else {
-                getMusicFromExternal()
+                isPermissionGranted = true
             }
+        }
+    }
+
+    private fun requestStoragePermission() {
+        activity?.let {activity ->
+            ActivityCompat.requestPermissions(
+                activity,
+                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                REQUEST_PERMISSION_CODE
+            )
         }
     }
 
     private fun setUpBottomNavigation() {
         navigationMain.setOnNavigationItemSelectedListener(onNavigationItemSelectedListener)
         navigationMain.selectedItemId = R.id.navigation_songs
-    }
-
-    private fun getMusicFromExternal() {
-        context?.let { context ->
-            viewModel.listMediaMetadata.postValue(getMusicHelper.getMusicFromExternal(context))
-        }
     }
 
     private fun goToFragment(fragment: Fragment, tag: String, addToBackStack: Boolean) {

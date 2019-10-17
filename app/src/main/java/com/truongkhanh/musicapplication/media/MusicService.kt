@@ -6,15 +6,14 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioManager
-import android.media.session.PlaybackState
 import android.os.Bundle
-import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaBrowserCompat.MediaItem
 import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
+import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.media.MediaBrowserServiceCompat
@@ -65,15 +64,16 @@ class MusicService() : MediaBrowserServiceCompat() {
             return
         }
 
-        val results = musicSource.whenReady {success ->
+        val results = musicSource.whenReady { success ->
             if (success) {
-                val childrens = musicSource.map {mediaMetadataCompat ->
+                val children = musicSource.map { item ->
+                    val a: MediaMetadataCompat = item
                     MediaItem(
-                        mediaMetadataCompat.description,
-                        mediaMetadataCompat.flag
+                        item.description,
+                        item.flag
                     )
                 }.toMutableList()
-                result.sendResult(childrens)
+                result.sendResult(children)
             } else {
                 result.sendResult(null)
             }
@@ -94,6 +94,20 @@ class MusicService() : MediaBrowserServiceCompat() {
         } else {
             BrowserRoot(MY_EMPTY_MEDIA_ROOT_ID, null)
         }
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent) {
+        super.onTaskRemoved(rootIntent)
+
+        exoPlayer.stop(true)
+    }
+
+    override fun onDestroy() {
+        mediaSession.run {
+            isActive = false
+            release()
+        }
+        notificationManager.cancel(NOW_PLAYING_NOTIFICATION)
     }
 
     private fun allowBrowsing(clientPackageName: String, clientUid: Int): Boolean {
@@ -125,7 +139,7 @@ class MusicService() : MediaBrowserServiceCompat() {
         musicSource = GetMusicHelper(this)
         musicSource.load()
 
-        mediaSessionConnector = MediaSessionConnector(mediaSession).also {connector ->
+        mediaSessionConnector = MediaSessionConnector(mediaSession).also { connector ->
             val dataSourceFactory = DefaultDataSourceFactory(
                 this, Util.getUserAgent(this, EXO_USER_AGENT), null
             )
@@ -150,7 +164,7 @@ class MusicService() : MediaBrowserServiceCompat() {
         }
 
         override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
-            mediaController.playbackState?.let{
+            mediaController.playbackState?.let {
                 updateNotification(it)
             }
         }
@@ -159,20 +173,22 @@ class MusicService() : MediaBrowserServiceCompat() {
     private fun updateNotification(state: PlaybackStateCompat) {
         val updateState = state.state
 
-        val notification = if (state.state != PlaybackStateCompat.STATE_NONE && mediaController.metadata != null) {
-            notificationBuilder.buildNotification(mediaSession.sessionToken)
-        } else {
-            null
-        }
+        val notification =
+            if (state.state != PlaybackStateCompat.STATE_NONE && mediaController.metadata != null) {
+                notificationBuilder.buildNotification(mediaSession.sessionToken)
+            } else {
+                null
+            }
 
         when (updateState) {
             PlaybackStateCompat.STATE_BUFFERING, PlaybackStateCompat.STATE_PLAYING -> {
                 becomingNoisyReceiver.register()
 
-                notification?.let{
+                notification?.let {
                     notificationManager.notify(NOW_PLAYING_NOTIFICATION, it)
                     if (!isForegroundService) {
-                        ContextCompat.startForegroundService(applicationContext,
+                        ContextCompat.startForegroundService(
+                            applicationContext,
                             Intent(applicationContext, this@MusicService::class.java)
                         )
                         startForeground(NOW_PLAYING_NOTIFICATION, notification)
@@ -208,7 +224,7 @@ class MusicService() : MediaBrowserServiceCompat() {
     private inner class BecomingNoisyReceiver(
         private var context: Context,
         sessionToken: MediaSessionCompat.Token
-    ):BroadcastReceiver() {
+    ) : BroadcastReceiver() {
 
         private var noisyIntentFilter = IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
         private var controller = MediaControllerCompat(context, sessionToken)

@@ -34,10 +34,10 @@ inline val PlaybackStateCompat.isPauseEnable
                     (state == PlaybackStateCompat.STATE_PLAYING) ||
                     (state == PlaybackStateCompat.STATE_BUFFERING))
 
-inline val PlaybackStateCompat.isSkipToNextEnable
+inline val PlaybackStateCompat.isSkipToNextEnabled
     get() = actions and PlaybackStateCompat.ACTION_SKIP_TO_NEXT != 0L
 
-inline val PlaybackStateCompat.isSkipToPreviousEnable
+inline val PlaybackStateCompat.isSkipToPreviousEnabled
     get() = actions and PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS != 0L
 
 inline val PlaybackStateCompat.currentPlaybackPosition: Long
@@ -260,6 +260,13 @@ inline var MediaMetadataCompat.Builder.downloadStatus: Long
     get() = throw IllegalAccessException("Cannot get from MediaMetadataCompat.Builder")
     set(value) {
         putLong(MediaMetadataCompat.METADATA_KEY_DOWNLOAD_STATUS, value)
+    }
+
+inline var MediaMetadataCompat.Builder.displayIcon: Bitmap?
+    @Deprecated(NO_GET, level = DeprecationLevel.ERROR)
+    get() = throw IllegalAccessException("Cannot get from MediaMetadataCompat.Builder")
+    set(value) {
+        putBitmap(MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON, value)
     }
 
 /**

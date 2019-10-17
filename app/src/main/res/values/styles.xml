@@ -24,4 +24,9 @@
         <item name="selectableItemBackground">?android:attr/selectableItemBackground</item>
     </style>
 
+    <style name="NormalTextView" parent="android:Widget.TextView">
+        <item name="android:fontFamily">@font/lato_regular</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
 </resources>
