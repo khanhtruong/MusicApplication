@@ -14,6 +14,7 @@ import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
+import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.media.MediaBrowserServiceCompat
@@ -107,7 +108,6 @@ class MusicService() : MediaBrowserServiceCompat() {
             isActive = false
             release()
         }
-        notificationManager.cancel(NOW_PLAYING_NOTIFICATION)
     }
 
     private fun allowBrowsing(clientPackageName: String, clientUid: Int): Boolean {
@@ -134,6 +134,7 @@ class MusicService() : MediaBrowserServiceCompat() {
 
         notificationBuilder = NotificationBuilder(this)
         notificationManager = NotificationManagerCompat.from(this)
+
         becomingNoisyReceiver = BecomingNoisyReceiver(this, mediaSession.sessionToken)
 
         musicSource = GetMusicHelper(this)

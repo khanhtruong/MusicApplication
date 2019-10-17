@@ -19,4 +19,6 @@
 
     <string name="duration_unknown">--:--</string>
     <string name="duration_format">%d:%02d</string>
+
+    <string name="toolbar_tile_now_playing">Now playing</string>
 </resources>

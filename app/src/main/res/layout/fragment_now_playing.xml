@@ -7,51 +7,54 @@
         android:id="@+id/ivSongAvatar"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:scaleType="centerCrop"/>
-
-    <TextView
-        android:id="@+id/tvSongName"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="15dp"
-        android:layout_marginEnd="15dp"
-        android:layout_marginBottom="10dp"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:layout_above="@id/tvSongArtist"
-        android:fontFamily="@font/lato_semibold"
-        android:textSize="18sp"
-        android:text="Cong chua bong bong"
+        android:scaleType="centerCrop"
         />
-    <TextView
-        android:id="@+id/tvSongArtist"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="15dp"
-        android:layout_marginEnd="15dp"
-        android:layout_marginBottom="15dp"
-        android:ellipsize="end"
-        android:maxLines="1"
-        style="@style/NormalTextView"
-        android:layout_above="@id/rlBottomFunction"
-        android:text="Khanh Truong"
-        />
-
 
     <RelativeLayout
         android:id="@+id/rlBottomFunction"
         android:layout_width="match_parent"
-        android:layout_height="150dp"
+        android:layout_height="230dp"
         android:paddingStart="10dp"
         android:paddingEnd="10dp"
         android:paddingTop="30dp"
         android:paddingBottom="20dp"
-        android:layout_alignParentBottom="true">
-
+        android:layout_alignParentBottom="true"
+        android:background="@drawable/bg_fade_image_view"
+        >
+        <TextView
+            android:id="@+id/tvSongName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="15dp"
+            android:layout_marginEnd="15dp"
+            android:layout_marginBottom="10dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:fontFamily="@font/lato_semibold"
+            android:textSize="18sp"
+            android:text="Cong chua bong bong"
+            />
+        <TextView
+            android:id="@+id/tvSongArtist"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="15dp"
+            android:layout_marginEnd="15dp"
+            android:layout_marginBottom="15dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            style="@style/NormalTextView"
+            android:layout_below="@id/tvSongName"
+            android:text="Khanh Truong"
+            />
         <SeekBar
             android:id="@+id/sbPosition"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tvSongArtist"
+            android:clickable="false"
+            android:focusable="false"
+            />
         <TextView
             android:id="@+id/tvCurrentPosition"
             android:layout_width="wrap_content"
@@ -78,7 +81,7 @@
                 android:id="@+id/btnPlayPause"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:padding="15dp"
+                android:padding="5dp"
                 android:layout_centerHorizontal="true"
                 android:src="@drawable/ic_play_arrow_black_24dp"
                 />
@@ -87,7 +90,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:padding="10dp"
-                android:layout_marginEnd="10dp"
+                android:layout_marginEnd="15dp"
                 android:layout_centerVertical="true"
                 android:layout_toStartOf="@id/btnPlayPause"
                 android:src="@drawable/ic_skip_previous_black_24dp"
@@ -97,19 +100,19 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:padding="10dp"
-                android:layout_marginStart="10dp"
+                android:layout_marginStart="15dp"
                 android:layout_centerVertical="true"
                 android:layout_toEndOf="@id/btnPlayPause"
                 android:src="@drawable/ic_skip_next_black_24dp"
                 />
             <ImageView
-                android:id="@+id/btnLoop"
+                android:id="@+id/btnRepeat"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:padding="10dp"
                 android:layout_marginStart="10dp"
                 android:layout_centerVertical="true"
-                android:src="@drawable/ic_loop_black_24dp"
+                android:src="@drawable/ic_repeat_black_24dp"
                 />
             <ImageView
                 android:id="@+id/btnShuffle"
