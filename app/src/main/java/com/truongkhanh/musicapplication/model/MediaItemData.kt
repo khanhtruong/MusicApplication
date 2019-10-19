@@ -1,7 +1,6 @@
 package com.truongkhanh.musicapplication.model
 
 import android.graphics.Bitmap
-import android.net.Uri
 import androidx.recyclerview.widget.DiffUtil
 
 data class MediaItemData(

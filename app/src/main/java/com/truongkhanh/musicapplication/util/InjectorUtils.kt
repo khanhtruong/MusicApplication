@@ -5,6 +5,8 @@ import android.content.ComponentName
 import android.content.Context
 import com.truongkhanh.musicapplication.media.MediaSessionConnection
 import com.truongkhanh.musicapplication.media.MusicService
+import com.truongkhanh.musicapplication.view.album.AlbumFragmentViewModel
+import com.truongkhanh.musicapplication.view.artist.ArtistFragmentViewModel
 import com.truongkhanh.musicapplication.view.mainscreen.MainFragmentViewModel
 import com.truongkhanh.musicapplication.view.nowplaying.NowPlayingFragmentViewModel
 import com.truongkhanh.musicapplication.view.song.SongFragmentViewModel
@@ -31,4 +33,20 @@ fun getSongFragmentViewModelFactory(context: Context, mediaID: String): SongFrag
         ComponentName(applicationContext, MusicService::class.java)
     )
     return SongFragmentViewModel.Factory(context, mediaID, mediaSessionConnection)
+}
+
+fun getArtistFragmentViewModelFactory(context: Context, mediaID: String): ArtistFragmentViewModel.Factory {
+    val applicationContext = context.applicationContext
+    val mediaSessionConnection = MediaSessionConnection.getInstance(applicationContext,
+        ComponentName(applicationContext, MusicService::class.java)
+    )
+    return ArtistFragmentViewModel.Factory(context, mediaID, mediaSessionConnection)
+}
+
+fun getAlbumFragmentViewModelFactory(context: Context, mediaID: String): AlbumFragmentViewModel.Factory {
+    val applicationContext = context.applicationContext
+    val mediaSessionConnection = MediaSessionConnection.getInstance(applicationContext,
+        ComponentName(applicationContext, MusicService::class.java)
+    )
+    return AlbumFragmentViewModel.Factory(context, mediaID, mediaSessionConnection)
 }

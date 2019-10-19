@@ -1,6 +1,5 @@
 package com.truongkhanh.musicapplication.util
 
-import android.database.Observable
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.SystemClock
@@ -22,7 +21,7 @@ inline val PlaybackStateCompat.isPlaying
     get() = (state == PlaybackStateCompat.STATE_BUFFERING) ||
             (state == PlaybackStateCompat.STATE_PLAYING)
 
-inline val PlaybackStateCompat.isPlayEnable
+inline val PlaybackStateCompat.isPlayEnabled
     get() = (actions and PlaybackStateCompat.ACTION_PLAY != 0L) ||
             ((actions and PlaybackStateCompat.ACTION_PLAY_PAUSE != 0L) &&
                     (state == PlaybackStateCompat.STATE_PAUSED) ||

@@ -10,12 +10,7 @@ import android.provider.MediaStore
 import android.support.v4.media.MediaDescriptionCompat
 import androidx.core.net.toUri
 import com.truongkhanh.musicapplication.R
-import com.truongkhanh.musicapplication.model.AbstractMusicSource
-import com.truongkhanh.musicapplication.model.STATE_ERROR
-import com.truongkhanh.musicapplication.model.STATE_INITIALIZED
-import com.truongkhanh.musicapplication.model.STATE_INITIALIZING
 import com.truongkhanh.musicapplication.util.*
-import java.util.concurrent.TimeUnit
 
 
 class GetMusicHelper(private val context: Context): AbstractMusicSource() {

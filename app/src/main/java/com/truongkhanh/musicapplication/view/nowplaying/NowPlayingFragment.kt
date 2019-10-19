@@ -13,6 +13,8 @@ import androidx.lifecycle.ViewModelProviders
 import com.bumptech.glide.Glide
 import com.truongkhanh.musicapplication.R
 import com.truongkhanh.musicapplication.base.BaseFragment
+import com.truongkhanh.musicapplication.model.NowPlayingMetadata
+import com.truongkhanh.musicapplication.model.NowPlayingMetadata.Companion.timestampToMSS
 import com.truongkhanh.musicapplication.util.*
 import com.truongkhanh.musicapplication.view.mainscreen.MainFragmentViewModel
 import kotlinx.android.synthetic.main.fragment_now_playing.*
@@ -60,6 +62,7 @@ class NowPlayingFragment : BaseFragment() {
 
     override fun setUpView(view: View, savedInstanceState: Bundle?) {
         bindingViewModel()
+        updateButtonState()
         initListener()
     }
 
@@ -155,11 +158,21 @@ class NowPlayingFragment : BaseFragment() {
         }
     }
 
+    private fun updateButtonState() {
+        val shuffleMode = getShuffleMode(sharedPreferences)
+        btnShuffle.setColorFilter(getShuffleColor(shuffleMode))
+        nowPlayingFragmentViewModel.updateShuffleMode(shuffleMode)
+
+        val repeatMode = getRepeatMode(sharedPreferences)
+        context?.let { btnRepeat.setImageDrawable(getRepeatDrawable(repeatMode, it)) }
+        nowPlayingFragmentViewModel.updateRepeatMode(repeatMode)
+    }
+
     private fun updateCurrentPosition(currentPosition: Long) {
         if (currentPosition > 0) {
             context?.let { context ->
                 val currentPositionString =
-                    NowPlayingFragmentViewModel.NowPlayingMetadata.timestampToMSS(
+                    timestampToMSS(
                         context,
                         currentPosition
                     )
@@ -168,7 +181,7 @@ class NowPlayingFragment : BaseFragment() {
         }
     }
 
-    private fun updateUI(nowPlayingMetadata: NowPlayingFragmentViewModel.NowPlayingMetadata) {
+    private fun updateUI(nowPlayingMetadata: NowPlayingMetadata) {
         Glide.with(this)
             .load(nowPlayingMetadata.displayIcon)
             .placeholder(R.drawable.ic_launcher_foreground)
