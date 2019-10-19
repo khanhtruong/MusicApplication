@@ -76,7 +76,7 @@ class NotificationBuilder(private var context: Context) {
 
         if (playbackState.isPlaying) {
             builder.addAction(pauseAction)
-        } else if (playbackState.isPlayEnable) {
+        } else if (playbackState.isPlayEnabled) {
             builder.addAction(playAction)
         }
 

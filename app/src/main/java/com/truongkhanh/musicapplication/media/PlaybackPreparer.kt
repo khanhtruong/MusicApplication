@@ -10,7 +10,6 @@ import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.upstream.DataSource
-import com.truongkhanh.musicapplication.model.MusicSource
 import com.truongkhanh.musicapplication.util.id
 import com.truongkhanh.musicapplication.util.toMediaSource
 
@@ -18,11 +17,13 @@ class PlaybackPreparer(
     private val musicSource: MusicSource,
     private val exoPlayer: ExoPlayer,
     private val dataSourceFactory: DataSource.Factory
-): MediaSessionConnector.PlaybackPreparer {
+) : MediaSessionConnector.PlaybackPreparer {
 
-    override fun getSupportedPrepareActions(): Long
-        = PlaybackStateCompat.ACTION_PREPARE_FROM_MEDIA_ID or
-            PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID
+    override fun getSupportedPrepareActions(): Long =
+        PlaybackStateCompat.ACTION_PREPARE_FROM_MEDIA_ID or
+                PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID or
+                PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH or
+                PlaybackStateCompat.ACTION_PREPARE_FROM_SEARCH
 
     override fun onPrepareFromMediaId(mediaId: String?, extras: Bundle?) {
         musicSource.whenReady {
@@ -51,7 +52,16 @@ class PlaybackPreparer(
         cb: ResultReceiver?
     ): Boolean = false
 
-    override fun onPrepareFromSearch(query: String?, extras: Bundle?) = Unit
+    override fun onPrepareFromSearch(query: String?, extras: Bundle?) {
+        musicSource.whenReady {
+            val metaDataList =
+                musicSource.search(query ?: "", extras ?: Bundle.EMPTY)
+            if(metaDataList.isNotEmpty()) {
+                val mediaSource = metaDataList.toMediaSource(dataSourceFactory)
+                exoPlayer.prepare(mediaSource)
+            }
+        }
+    }
 
     override fun onPrepareFromUri(uri: Uri?, extras: Bundle?) = Unit
 

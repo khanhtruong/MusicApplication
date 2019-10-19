@@ -13,8 +13,6 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
-import android.util.Log
-import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.media.MediaBrowserServiceCompat
@@ -24,14 +22,7 @@ import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.ext.mediasession.TimelineQueueNavigator
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
-import com.truongkhanh.musicapplication.model.MusicSource
-import com.truongkhanh.musicapplication.util.MUSIC_SERVICE
-import com.truongkhanh.musicapplication.util.NOW_PLAYING_NOTIFICATION
-import com.truongkhanh.musicapplication.util.flag
-
-private const val MY_MEDIA_ROOT_ID = "media_root_id"
-private const val MY_EMPTY_MEDIA_ROOT_ID = "empty_root_id"
-private const val LOG_TAG = "log_tag"
+import com.truongkhanh.musicapplication.util.*
 
 class MusicService() : MediaBrowserServiceCompat() {
 
@@ -68,7 +59,6 @@ class MusicService() : MediaBrowserServiceCompat() {
         val results = musicSource.whenReady { success ->
             if (success) {
                 val children = musicSource.map { item ->
-                    val a: MediaMetadataCompat = item
                     MediaItem(
                         item.description,
                         item.flag
@@ -265,4 +255,7 @@ private class QueueNavigator(
 
 const val GET_MUSIC_FAILED = "com.truongkhanh.musicapplication.media.getmusicfailed"
 
+private const val MY_MEDIA_ROOT_ID = "media_root_id"
+private const val MY_EMPTY_MEDIA_ROOT_ID = "empty_root_id"
+private const val LOG_TAG = "log_tag"
 private const val EXO_USER_AGENT = "exoAgent"

@@ -1,9 +1,8 @@
-package com.truongkhanh.musicapplication.view.song
+package com.truongkhanh.musicapplication.view.artist
 
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.MediaBrowserCompat.SubscriptionCallback
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import androidx.lifecycle.*
@@ -15,18 +14,19 @@ import com.truongkhanh.musicapplication.model.MediaItemData
 import com.truongkhanh.musicapplication.util.id
 import com.truongkhanh.musicapplication.util.isPlaying
 
-class SongFragmentViewModel(private val context: Context, private val mediaID: String, mediaSessionConnection: MediaSessionConnection): ViewModel() {
+class ArtistFragmentViewModel(context: Context, private val mediaID: String, mediaSessionConnection: MediaSessionConnection) : ViewModel() {
 
     private val _mediaItems = MutableLiveData<List<MediaItemData>>()
     val mediaItems: LiveData<List<MediaItemData>> = _mediaItems
 
-    private val subscriptionCallback = object : SubscriptionCallback() {
+    private val subscriptionCallback = object : MediaBrowserCompat.SubscriptionCallback() {
         override fun onChildrenLoaded(
             parentId: String,
             children: MutableList<MediaBrowserCompat.MediaItem>
         ) {
             super.onChildrenLoaded(parentId, children)
             val itemsList = children.map { child ->
+                //                val avatarBitmap = child.description.iconBitmap ?: BitmapFactory.decodeResource(context.resources, R.drawable.ic_launcher_foreground)
                 val avatarBitmap = if (child.description.iconBitmap != null) {
                     child.description.iconBitmap
                 } else {
@@ -65,25 +65,14 @@ class SongFragmentViewModel(private val context: Context, private val mediaID: S
 
     private val mediaSessionConnection = mediaSessionConnection.also {
         it.subscribe(mediaID, subscriptionCallback)
-
         it.playbackState.observeForever(playbackStateObserver)
         it.mediaMetadata.observeForever(mediaMetadataObserver)
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-
-        mediaSessionConnection.playbackState.removeObserver(playbackStateObserver)
-        mediaSessionConnection.mediaMetadata.removeObserver(mediaMetadataObserver)
-
-        mediaSessionConnection.unSubscribe(mediaID, subscriptionCallback)
     }
 
     private fun updateState(
         playbackState: PlaybackStateCompat,
         mediaMetadata: MediaMetadataCompat
     ): List<MediaItemData> {
-
         val newResId = when (playbackState.isPlaying) {
             true -> R.drawable.ic_pause_black_24dp
             else -> R.drawable.ic_play_arrow_black_24dp
@@ -113,7 +102,7 @@ class SongFragmentViewModel(private val context: Context, private val mediaID: S
 
         @Suppress("unchecked_cast")
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-            return SongFragmentViewModel(context, mediaId, mediaSessionConnection) as T
+            return ArtistFragmentViewModel(context, mediaId, mediaSessionConnection) as T
         }
     }
 }

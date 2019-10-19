@@ -53,7 +53,6 @@ class SongAdapter(private val itemClickListener: (MediaItemData) -> Unit): ListA
                 .placeholder(R.drawable.ic_launcher_foreground)
                 .into(holder.avatar)
 
-//            holder.state.setImageResource(mediaItem.playbackRes)
             Glide.with(holder.itemView)
                 .load(mediaItem.playbackRes)
                 .into(holder.state)

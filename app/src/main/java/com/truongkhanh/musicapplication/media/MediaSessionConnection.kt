@@ -2,7 +2,6 @@ package com.truongkhanh.musicapplication.media
 
 import android.content.ComponentName
 import android.content.Context
-import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
@@ -36,7 +35,8 @@ class MediaSessionConnection(context: Context, serviceComponent: ComponentName) 
     }
     private lateinit var mediaController: MediaControllerCompat
     val rootMediaId: String get() = mediaBrowser.root
-    val transportControls get() = mediaController.transportControls
+    val transportControls: MediaControllerCompat.TransportControls
+        get() = mediaController.transportControls
 
     fun subscribe(parentID: String, callback: MediaBrowserCompat.SubscriptionCallback) {
         mediaBrowser.subscribe(parentID, callback)

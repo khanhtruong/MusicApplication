@@ -15,10 +15,54 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/navigationMain"/>
 
+    <RelativeLayout
+        android:id="@+id/rlNowPlaying"
+        app:layout_constraintBottom_toTopOf="@id/navigationMain"
+        app:layout_constraintStart_toStartOf="parent"
+        android:gravity="center_vertical"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:visibility="gone"
+        android:background="@color/colorGray"
+        >
+        <TextView
+            android:id="@+id/tvSongName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/lato_semibold"
+            android:textColor="@color/colorAccent"
+            android:textSize="16sp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="Cong Chua bong bong"
+            android:layout_centerHorizontal="true"
+            />
+        <TextView
+            android:id="@+id/tvSongArtist"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tvSongName"
+            android:textColor="@color/colorAccent"
+            style="@style/NormalTextView"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="Truong Khanh"
+            android:layout_centerHorizontal="true"
+            />
+        <ImageView
+            android:id="@+id/btnSongState"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:src="@drawable/ic_play_arrow_black_24dp"
+            />
+    </RelativeLayout>
+
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/navigationMain"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         android:background="?android:attr/windowBackground"
         app:labelVisibilityMode="labeled"

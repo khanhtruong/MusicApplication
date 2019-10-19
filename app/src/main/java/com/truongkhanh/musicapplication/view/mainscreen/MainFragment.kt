@@ -11,13 +11,10 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
-import com.google.android.material.bottomnavigation.BottomNavigationMenu
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.truongkhanh.musicapplication.R
 import com.truongkhanh.musicapplication.base.BaseFragment
-import com.truongkhanh.musicapplication.media.GetMusicHelper
 import com.truongkhanh.musicapplication.util.BOTTOM_NAVIGATION_TAG
 import com.truongkhanh.musicapplication.util.BUNDLE_MEDIA_ID
 import com.truongkhanh.musicapplication.util.REQUEST_PERMISSION_CODE
@@ -51,13 +48,31 @@ class MainFragment : BaseFragment() {
                     return@OnNavigationItemSelectedListener true
                 }
                 R.id.navigation_artist -> {
-                    val artistFragment = ArtistFragment.getInstance()
-                    goToFragment(artistFragment, BOTTOM_NAVIGATION_TAG, false)
+                    if(isPermissionGranted) {
+                        rootMediaID?.let {
+                            val artistFragment = ArtistFragment.getInstance()
+                            val bundle = Bundle()
+                            bundle.putString(BUNDLE_MEDIA_ID, it)
+                            artistFragment.arguments = bundle
+                            goToFragment(artistFragment, BOTTOM_NAVIGATION_TAG, false)
+                        }
+                    } else {
+                        requestStoragePermission()
+                    }
                     return@OnNavigationItemSelectedListener true
                 }
                 R.id.navigation_album -> {
-                    val albumFragment = AlbumFragment.getInstance()
-                    goToFragment(albumFragment, BOTTOM_NAVIGATION_TAG, false)
+                    if(isPermissionGranted) {
+                        rootMediaID?.let {
+                            val albumFragment = AlbumFragment.getInstance()
+                            val bundle = Bundle()
+                            bundle.putString(BUNDLE_MEDIA_ID, it)
+                            albumFragment.arguments = bundle
+                            goToFragment(albumFragment, BOTTOM_NAVIGATION_TAG, false)
+                        }
+                    } else {
+                        requestStoragePermission()
+                    }
                     return@OnNavigationItemSelectedListener true
                 }
             }
@@ -72,6 +87,7 @@ class MainFragment : BaseFragment() {
         setUpBottomNavigation()
         checkPermissions()
         bindingViewModel()
+        initButtonClickListener()
     }
 
     private fun bindingViewModel() {
@@ -85,6 +101,20 @@ class MainFragment : BaseFragment() {
                 goToFragment(songFragment, BOTTOM_NAVIGATION_TAG, false)
             }
         })
+        viewModel.mediaMetadata.observe(this, Observer {nowPlayingMetaData ->
+            rlNowPlaying.visibility = View.VISIBLE
+            tvSongName.text = nowPlayingMetaData.title
+            tvSongArtist.text = nowPlayingMetaData.subtitle
+        })
+        viewModel.buttonPlayResource.observe(this, Observer {resource ->
+            btnSongState.setImageResource(resource)
+        })
+    }
+
+    private fun initButtonClickListener() {
+        btnSongState.setOnClickListener {
+            viewModel.onClickPlayButton()
+        }
     }
 
     override fun onCreateView(

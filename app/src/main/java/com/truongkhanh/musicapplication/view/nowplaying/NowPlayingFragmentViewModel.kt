@@ -1,9 +1,6 @@
 package com.truongkhanh.musicapplication.view.nowplaying
 
 import android.app.Application
-import android.content.Context
-import android.graphics.Bitmap
-import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.support.v4.media.MediaMetadataCompat
@@ -12,37 +9,14 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.google.android.exoplayer2.Player
 import com.truongkhanh.musicapplication.R
 import com.truongkhanh.musicapplication.media.EMPTY_PLAYBACK_STATE
 import com.truongkhanh.musicapplication.media.MediaSessionConnection
 import com.truongkhanh.musicapplication.media.NOTHING_PLAYING
+import com.truongkhanh.musicapplication.model.NowPlayingMetadata
 import com.truongkhanh.musicapplication.util.*
-import kotlin.math.floor
 
 class NowPlayingFragmentViewModel(private val application: Application, mediaSessionConnection: MediaSessionConnection): ViewModel() {
-
-    data class NowPlayingMetadata(
-        val id: String,
-        val displayIcon: Bitmap?,
-        val title: String?,
-        val subtitle: String?,
-        val duration: String
-    ) {
-
-        companion object {
-            /**
-             * Utility method to convert milliseconds to a display of minutes and seconds
-             */
-            fun timestampToMSS(context: Context, position: Long): String {
-                val totalSeconds = floor(position / 1E3).toInt()
-                val minutes = totalSeconds / 60
-                val remainingSeconds = totalSeconds - (minutes * 60)
-                return if (position < 0) context.getString(R.string.duration_unknown)
-                else context.getString(R.string.duration_format).format(minutes, remainingSeconds)
-            }
-        }
-    }
 
     var mediaMetadata = MutableLiveData<NowPlayingMetadata>()
     var mediaPosition = MutableLiveData<Long>().apply {
@@ -82,6 +56,7 @@ class NowPlayingFragmentViewModel(private val application: Application, mediaSes
         if(isLoopHandler)
             updatePlayPosition()
     }, POSITION_UPDATE_INTERVAL_MILLIS)
+
 
     private fun updateState(
         playbackState: PlaybackStateCompat,
@@ -130,6 +105,14 @@ class NowPlayingFragmentViewModel(private val application: Application, mediaSes
 
     fun playPrevious() {
         mediaSessionConnection.transportControls.skipToPrevious()
+    }
+
+    fun updateRepeatMode(repeatMode: Int) {
+        mediaSessionConnection.transportControls.setRepeatMode(repeatMode)
+    }
+
+    fun updateShuffleMode(shuffleMode: Int) {
+        mediaSessionConnection.transportControls.setShuffleMode(shuffleMode)
     }
 
     fun playOrPause() {

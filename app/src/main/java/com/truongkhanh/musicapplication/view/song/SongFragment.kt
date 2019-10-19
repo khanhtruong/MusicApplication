@@ -1,15 +1,10 @@
 package com.truongkhanh.musicapplication.view.song
 
-import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.support.v4.media.MediaBrowserCompat
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
@@ -18,7 +13,6 @@ import com.truongkhanh.musicapplication.R
 import com.truongkhanh.musicapplication.base.BaseFragment
 import com.truongkhanh.musicapplication.media.Song
 import com.truongkhanh.musicapplication.util.BUNDLE_MEDIA_ID
-import com.truongkhanh.musicapplication.util.BUNDLE_SONGS
 import com.truongkhanh.musicapplication.util.getMainFragmentViewModelFactory
 import com.truongkhanh.musicapplication.util.getSongFragmentViewModelFactory
 import com.truongkhanh.musicapplication.view.mainscreen.MainFragmentViewModel
@@ -64,7 +58,7 @@ class SongFragment : BaseFragment() {
 
         mediaID?.let{ bindingSongFragmentViewModel(context, it) }
 
-        mainFragmentViewModel.navigateToFragment.observe(this, Observer { event ->
+        mainFragmentViewModel.navigateToActivity.observe(this, Observer { event ->
             event?.getContentIfNotHandled()?.let { activity ->
                 val intent = Intent(context, activity::class.java)
                 context.startActivity(intent)

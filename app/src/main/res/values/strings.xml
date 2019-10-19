@@ -8,6 +8,7 @@
     <string name="lbl_song_name_tag">Name:</string>
     <string name="lbl_song_artist_tag">Artist:</string>
     <string name="lbl_song_album_tag">Album:</string>
+    <string name="lbl_artist_name_tag">Artist name:</string>
 
     <string name="notification_skip_to_previous">Skip to previous track</string>
     <string name="notification_skip_to_next">Skip to next track</string>
