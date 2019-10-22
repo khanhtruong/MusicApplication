@@ -10,8 +10,7 @@ import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.upstream.DataSource
-import com.truongkhanh.musicapplication.util.id
-import com.truongkhanh.musicapplication.util.toMediaSource
+import com.truongkhanh.musicapplication.util.*
 
 class PlaybackPreparer(
     private val musicSource: MusicSource,
@@ -30,16 +29,31 @@ class PlaybackPreparer(
             val itemToPlay: MediaMetadataCompat? = musicSource.find { item ->
                 item.id == mediaId
             }
+            val filter = extras?.getString(BUNDLE_FILTER)
             if (itemToPlay == null) {
                 // TODO: Notify caller of the error.
             } else {
-                val metadataList = musicSource.toList()
+                val metadataList = buildPlaylist(filter, itemToPlay)
                 val mediaSource = metadataList.toMediaSource(dataSourceFactory)
 
                 val initialWindowIndex = metadataList.indexOf(itemToPlay)
 
                 exoPlayer.prepare(mediaSource)
                 exoPlayer.seekTo(initialWindowIndex, 0)
+            }
+        }
+    }
+
+    private fun buildPlaylist(filter: String?, item: MediaMetadataCompat): MutableList<MediaMetadataCompat> {
+        return when (filter) {
+            FILTER_ARTIST -> {
+                musicSource.filter { it.artist == item.artist }.sortedBy { it.trackNumber }.toMutableList()
+            }
+            FILTER_ALBUM -> {
+                musicSource.filter { it.album == item.album }.sortedBy { it.trackNumber }.toMutableList()
+            }
+            else -> {
+                musicSource.toMutableList()
             }
         }
     }

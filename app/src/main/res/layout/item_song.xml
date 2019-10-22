@@ -23,14 +23,26 @@
         android:layout_marginStart="10dp"
         />
 
+    <View
+        android:id="@+id/vSongState"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        app:layout_constraintTop_toTopOf="@id/ivSongAvatar"
+        app:layout_constraintBottom_toBottomOf="@id/ivSongAvatar"
+        app:layout_constraintEnd_toEndOf="@id/ivSongAvatar"
+        app:layout_constraintStart_toStartOf="@id/ivSongAvatar"
+        android:background="@drawable/bg_transparent_image_view"
+        />
+
     <ImageView
         android:id="@+id/ivSongState"
         android:layout_width="30dp"
         android:layout_height="30dp"
-        app:layout_constraintEnd_toEndOf="@id/ivSongAvatar"
+        app:layout_constraintTop_toTopOf="@id/ivSongAvatar"
         app:layout_constraintBottom_toBottomOf="@id/ivSongAvatar"
-        android:layout_margin="5dp"
-        android:src="@drawable/ic_play_arrow_black_24dp"
+        app:layout_constraintEnd_toEndOf="@id/ivSongAvatar"
+        app:layout_constraintStart_toStartOf="@id/ivSongAvatar"
+        android:src="@drawable/ic_play_circle_filled_black_24dp"
         />
 
     <TextView

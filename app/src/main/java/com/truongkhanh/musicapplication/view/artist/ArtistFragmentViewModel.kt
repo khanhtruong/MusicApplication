@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.PlaybackStateCompat
+import android.util.Log
 import androidx.lifecycle.*
 import com.truongkhanh.musicapplication.R
 import com.truongkhanh.musicapplication.media.EMPTY_PLAYBACK_STATE
@@ -26,7 +27,6 @@ class ArtistFragmentViewModel(context: Context, private val mediaID: String, med
         ) {
             super.onChildrenLoaded(parentId, children)
             val itemsList = children.map { child ->
-                //                val avatarBitmap = child.description.iconBitmap ?: BitmapFactory.decodeResource(context.resources, R.drawable.ic_launcher_foreground)
                 val avatarBitmap = if (child.description.iconBitmap != null) {
                     child.description.iconBitmap
                 } else {
@@ -64,9 +64,17 @@ class ArtistFragmentViewModel(context: Context, private val mediaID: String, med
     }
 
     private val mediaSessionConnection = mediaSessionConnection.also {
+        Log.d("Debuggg", "Artist subscribe: $mediaID")
         it.subscribe(mediaID, subscriptionCallback)
         it.playbackState.observeForever(playbackStateObserver)
         it.mediaMetadata.observeForever(mediaMetadataObserver)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        mediaSessionConnection.playbackState.removeObserver(playbackStateObserver)
+        mediaSessionConnection.mediaMetadata.removeObserver(mediaMetadataObserver)
+        mediaSessionConnection.unSubscribe(mediaID, subscriptionCallback)
     }
 
     private fun updateState(
@@ -74,12 +82,12 @@ class ArtistFragmentViewModel(context: Context, private val mediaID: String, med
         mediaMetadata: MediaMetadataCompat
     ): List<MediaItemData> {
         val newResId = when (playbackState.isPlaying) {
-            true -> R.drawable.ic_pause_black_24dp
-            else -> R.drawable.ic_play_arrow_black_24dp
+            true -> R.drawable.ic_play_arrow_black_24dp
+            else -> R.drawable.ic_pause_black_24dp
         }
 
         return mediaItems.value?.map {
-            val useResId = if (it.mediaId == mediaMetadata.id) newResId else NO_RES
+            val useResId = if (it.mediaId == mediaMetadata.id) newResId else NO_RESOURCE
             it.copy(playbackRes = useResId)
         } ?: emptyList()
     }
@@ -88,9 +96,9 @@ class ArtistFragmentViewModel(context: Context, private val mediaID: String, med
         val isActive = mediaId == mediaSessionConnection.mediaMetadata.value?.id
         val isPlaying = mediaSessionConnection.playbackState.value?.isPlaying ?: false
         return when {
-            !isActive -> NO_RES
-            isPlaying -> R.drawable.ic_pause_black_24dp
-            else -> R.drawable.ic_play_arrow_black_24dp
+            !isActive -> NO_RESOURCE
+            isPlaying -> R.drawable.ic_play_arrow_black_24dp
+            else -> R.drawable.ic_pause_black_24dp
         }
     }
 
@@ -107,4 +115,4 @@ class ArtistFragmentViewModel(context: Context, private val mediaID: String, med
     }
 }
 
-private const val NO_RES = 0
+private const val NO_RESOURCE = 0

@@ -3,45 +3,29 @@ package com.truongkhanh.musicapplication.view.nowplaying
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.support.v4.media.session.PlaybackStateCompat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.SeekBar
+import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import com.bumptech.glide.Glide
 import com.truongkhanh.musicapplication.R
 import com.truongkhanh.musicapplication.base.BaseFragment
 import com.truongkhanh.musicapplication.model.NowPlayingMetadata
-import com.truongkhanh.musicapplication.model.NowPlayingMetadata.Companion.timestampToMSS
-import com.truongkhanh.musicapplication.util.*
-import com.truongkhanh.musicapplication.view.mainscreen.MainFragmentViewModel
+import com.truongkhanh.musicapplication.util.BUNDLE_MEDIA_ID
+import com.truongkhanh.musicapplication.util.getNowPlayingViewModelFactory
+import com.truongkhanh.musicapplication.util.getSharedPreferences
+import com.truongkhanh.musicapplication.view.nowplaying.adapter.BUTTONS_CONTROL_FRAGMENT
+import com.truongkhanh.musicapplication.view.nowplaying.adapter.ViewPagerAdapter
 import kotlinx.android.synthetic.main.fragment_now_playing.*
 
 class NowPlayingFragment : BaseFragment() {
 
     private lateinit var nowPlayingFragmentViewModel: NowPlayingFragmentViewModel
-    private lateinit var mainFragmentViewModel: MainFragmentViewModel
     private lateinit var sharedPreferences: SharedPreferences
-
-    private var isAllowUpdateSeekBar = true
-    private val seekBarChangeListener = object : SeekBar.OnSeekBarChangeListener {
-        override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-
-        }
-
-        override fun onStartTrackingTouch(seekBar: SeekBar?) {
-            isAllowUpdateSeekBar = false
-        }
-
-        override fun onStopTrackingTouch(seekBar: SeekBar?) {
-            seekBar?.progress?.let { newProgress ->
-                nowPlayingFragmentViewModel.updatePosition(newProgress.toLong())
-            }
-            isAllowUpdateSeekBar = true
-        }
-    }
+    private lateinit var mediaID: String
+    private lateinit var viewPagerAdapter: ViewPagerAdapter
 
     companion object {
         fun getInstance() = NowPlayingFragment()
@@ -61,124 +45,32 @@ class NowPlayingFragment : BaseFragment() {
     }
 
     override fun setUpView(view: View, savedInstanceState: Bundle?) {
+        getData()
         bindingViewModel()
-        updateButtonState()
-        initListener()
+        fragmentManager?.let { initViewPager(it) }
+    }
+
+    private fun getData() {
+        arguments?.let{
+            mediaID = it.getString(BUNDLE_MEDIA_ID)!!
+        }
     }
 
     private fun bindingViewModel() {
         val context = activity ?: return
         nowPlayingFragmentViewModel =
-            ViewModelProviders.of(context, getNowPlayingViewModelFactory(context))
+            ViewModelProviders.of(context, getNowPlayingViewModelFactory(context, mediaID))
                 .get(NowPlayingFragmentViewModel::class.java)
-        mainFragmentViewModel =
-            ViewModelProviders.of(context, getMainFragmentViewModelFactory(context))
-                .get(MainFragmentViewModel::class.java)
 
         nowPlayingFragmentViewModel.mediaMetadata.observe(this, Observer { nowPlayingMetaData ->
             updateUI(nowPlayingMetaData)
         })
-        nowPlayingFragmentViewModel.mediaPosition.observe(this, Observer { currentPosition ->
-            updateCurrentPosition(currentPosition)
-            if (isAllowUpdateSeekBar)
-                sbPosition.progress = currentPosition.toInt()
-        })
-        nowPlayingFragmentViewModel.totalPosition.observe(this, Observer { maxPosition ->
-            sbPosition.max = maxPosition.toInt()
-        })
-        nowPlayingFragmentViewModel.buttonPlayResource.observe(this, Observer { buttonResource ->
-            btnPlayPause.setImageResource(buttonResource)
-        })
-        nowPlayingFragmentViewModel.buttonNextEnable.observe(this, Observer { enable ->
-            btnNext.isEnabled = enable
-            btnNext.setColorFilter(getButtonColor(enable))
-        })
-        nowPlayingFragmentViewModel.buttonPreviousEnable.observe(this, Observer { enable ->
-            btnPrevious.isEnabled = enable
-            btnPrevious.setColorFilter(getButtonColor(enable))
-        })
     }
 
-    private fun initListener() {
-        seekBarListener()
-        buttonListener()
-    }
-
-    private fun seekBarListener() {
-        sbPosition.setOnSeekBarChangeListener(seekBarChangeListener)
-    }
-
-    private fun buttonListener() {
-        btnRepeat.setOnClickListener {
-            var repeatMode = getRepeatMode(sharedPreferences)
-            repeatMode = when (repeatMode) {
-                PlaybackStateCompat.REPEAT_MODE_ALL -> {
-                    PlaybackStateCompat.REPEAT_MODE_ONE
-                }
-                PlaybackStateCompat.REPEAT_MODE_ONE -> {
-                    PlaybackStateCompat.REPEAT_MODE_NONE
-                }
-                else -> {
-                    PlaybackStateCompat.REPEAT_MODE_ALL
-                }
-            }
-            nowPlayingFragmentViewModel.changeRepeatMode(repeatMode)
-            setRepeatMode(sharedPreferences, repeatMode)
-            context?.let { context ->
-                btnRepeat.setImageDrawable(
-                    getRepeatDrawable(
-                        repeatMode,
-                        context
-                    )
-                )
-            }
-        }
-        btnShuffle.setOnClickListener {
-            var shuffleMode = getShuffleMode(sharedPreferences)
-            shuffleMode = when (shuffleMode) {
-                PlaybackStateCompat.SHUFFLE_MODE_ALL -> {
-                    PlaybackStateCompat.SHUFFLE_MODE_NONE
-                }
-                else -> {
-                    PlaybackStateCompat.SHUFFLE_MODE_ALL
-                }
-            }
-            nowPlayingFragmentViewModel.changeShuffleMode(shuffleMode)
-            setShuffleMode(sharedPreferences, shuffleMode)
-            btnShuffle.setColorFilter(getShuffleColor(shuffleMode))
-        }
-        btnPlayPause.setOnClickListener {
-            nowPlayingFragmentViewModel.playOrPause()
-        }
-        btnNext.setOnClickListener {
-            nowPlayingFragmentViewModel.playNext()
-        }
-        btnPrevious.setOnClickListener {
-            nowPlayingFragmentViewModel.playPrevious()
-        }
-    }
-
-    private fun updateButtonState() {
-        val shuffleMode = getShuffleMode(sharedPreferences)
-        btnShuffle.setColorFilter(getShuffleColor(shuffleMode))
-        nowPlayingFragmentViewModel.updateShuffleMode(shuffleMode)
-
-        val repeatMode = getRepeatMode(sharedPreferences)
-        context?.let { btnRepeat.setImageDrawable(getRepeatDrawable(repeatMode, it)) }
-        nowPlayingFragmentViewModel.updateRepeatMode(repeatMode)
-    }
-
-    private fun updateCurrentPosition(currentPosition: Long) {
-        if (currentPosition > 0) {
-            context?.let { context ->
-                val currentPositionString =
-                    timestampToMSS(
-                        context,
-                        currentPosition
-                    )
-                tvCurrentPosition.text = currentPositionString
-            }
-        }
+    private fun initViewPager(fragmentManager: FragmentManager) {
+        viewPagerAdapter = ViewPagerAdapter(mediaID, fragmentManager)
+        vpNowPlaying.adapter = viewPagerAdapter
+        vpNowPlaying.setCurrentItem(BUTTONS_CONTROL_FRAGMENT, false)
     }
 
     private fun updateUI(nowPlayingMetadata: NowPlayingMetadata) {
@@ -186,10 +78,6 @@ class NowPlayingFragment : BaseFragment() {
             .load(nowPlayingMetadata.displayIcon)
             .placeholder(R.drawable.ic_launcher_foreground)
             .into(ivSongAvatar)
-
-        tvSongName.text = nowPlayingMetadata.title
-        tvSongArtist.text = nowPlayingMetadata.subtitle
-        tvTotalPosition.text = nowPlayingMetadata.duration
     }
 
 }

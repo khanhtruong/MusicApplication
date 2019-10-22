@@ -15,6 +15,7 @@ class SongViewHolder(view: View, itemClickListener: (MediaItemData) -> Unit) :
     val album: TextView = view.tvSongAlbum
     val avatar: ImageView = view.ivSongAvatar
     val state: ImageView = view.ivSongState
+    val vState: View = view.vSongState
 
     var itemData: MediaItemData? = null
 

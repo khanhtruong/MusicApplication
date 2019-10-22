@@ -2,6 +2,7 @@ package com.truongkhanh.musicapplication.view.mainscreen
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -12,21 +13,22 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.truongkhanh.musicapplication.R
 import com.truongkhanh.musicapplication.base.BaseFragment
-import com.truongkhanh.musicapplication.util.BOTTOM_NAVIGATION_TAG
-import com.truongkhanh.musicapplication.util.BUNDLE_MEDIA_ID
-import com.truongkhanh.musicapplication.util.REQUEST_PERMISSION_CODE
-import com.truongkhanh.musicapplication.util.getMainFragmentViewModelFactory
+import com.truongkhanh.musicapplication.model.NowPlayingMetadata
+import com.truongkhanh.musicapplication.util.*
 import com.truongkhanh.musicapplication.view.album.AlbumFragment
 import com.truongkhanh.musicapplication.view.artist.ArtistFragment
+import com.truongkhanh.musicapplication.view.nowplaying.NowPlayingActivity
 import com.truongkhanh.musicapplication.view.song.SongFragment
 import kotlinx.android.synthetic.main.fragment_main.*
 
 class MainFragment : BaseFragment() {
 
-    private lateinit var viewModel: MainFragmentViewModel
+    private lateinit var mainFragmentViewModel: MainFragmentViewModel
     private var isPermissionGranted = false
     private var rootMediaID: String? = null
 
@@ -38,7 +40,7 @@ class MainFragment : BaseFragment() {
                         rootMediaID?.let {
                             val songFragment = SongFragment.getInstance()
                             val bundle = Bundle()
-                            bundle.putString(BUNDLE_MEDIA_ID, it)
+                            bundle.putString(BUNDLE_MEDIA_ID, ALL_SONG_MAP_KEY)
                             songFragment.arguments = bundle
                             goToFragment(songFragment, BOTTOM_NAVIGATION_TAG, false)
                         }
@@ -52,7 +54,7 @@ class MainFragment : BaseFragment() {
                         rootMediaID?.let {
                             val artistFragment = ArtistFragment.getInstance()
                             val bundle = Bundle()
-                            bundle.putString(BUNDLE_MEDIA_ID, it)
+                            bundle.putString(BUNDLE_MEDIA_ID, ARTIST_MAP_KEY)
                             artistFragment.arguments = bundle
                             goToFragment(artistFragment, BOTTOM_NAVIGATION_TAG, false)
                         }
@@ -66,7 +68,7 @@ class MainFragment : BaseFragment() {
                         rootMediaID?.let {
                             val albumFragment = AlbumFragment.getInstance()
                             val bundle = Bundle()
-                            bundle.putString(BUNDLE_MEDIA_ID, it)
+                            bundle.putString(BUNDLE_MEDIA_ID, ALBUM_MAP_KEY)
                             albumFragment.arguments = bundle
                             goToFragment(albumFragment, BOTTOM_NAVIGATION_TAG, false)
                         }
@@ -87,34 +89,7 @@ class MainFragment : BaseFragment() {
         setUpBottomNavigation()
         checkPermissions()
         bindingViewModel()
-        initButtonClickListener()
-    }
-
-    private fun bindingViewModel() {
-        viewModel.rootMediaID.observe(this, Observer {rootMediaID ->
-            rootMediaID?.let {
-                this.rootMediaID = rootMediaID
-                val songFragment = SongFragment.getInstance()
-                val bundle = Bundle()
-                bundle.putString(BUNDLE_MEDIA_ID, rootMediaID)
-                songFragment.arguments = bundle
-                goToFragment(songFragment, BOTTOM_NAVIGATION_TAG, false)
-            }
-        })
-        viewModel.mediaMetadata.observe(this, Observer {nowPlayingMetaData ->
-            rlNowPlaying.visibility = View.VISIBLE
-            tvSongName.text = nowPlayingMetaData.title
-            tvSongArtist.text = nowPlayingMetaData.subtitle
-        })
-        viewModel.buttonPlayResource.observe(this, Observer {resource ->
-            btnSongState.setImageResource(resource)
-        })
-    }
-
-    private fun initButtonClickListener() {
-        btnSongState.setOnClickListener {
-            viewModel.onClickPlayButton()
-        }
+        initClickListener()
     }
 
     override fun onCreateView(
@@ -127,7 +102,7 @@ class MainFragment : BaseFragment() {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        viewModel = ViewModelProviders
+        mainFragmentViewModel = ViewModelProviders
             .of(this, getMainFragmentViewModelFactory(context))
             .get(MainFragmentViewModel::class.java)
     }
@@ -144,6 +119,54 @@ class MainFragment : BaseFragment() {
                     isPermissionGranted = true
                 }
                 return
+            }
+        }
+    }
+
+    private fun bindingViewModel() {
+        mainFragmentViewModel.rootMediaID.observe(this, Observer { rootMediaID ->
+            rootMediaID?.let {
+                this.rootMediaID = rootMediaID
+                val songFragment = SongFragment.getInstance()
+                val bundle = Bundle()
+                bundle.putString(BUNDLE_MEDIA_ID, ALL_SONG_MAP_KEY)
+                songFragment.arguments = bundle
+                goToFragment(songFragment, BOTTOM_NAVIGATION_TAG, false)
+            }
+        })
+        mainFragmentViewModel.mediaMetadata.observe(this, Observer { nowPlayingMetaData ->
+            if (rlNowPlaying.visibility == View.GONE) {
+                rlNowPlaying.visibility = View.VISIBLE
+                isNowPlayingVisible = true
+            }
+            updateUI(nowPlayingMetaData)
+        })
+        mainFragmentViewModel.buttonPlayResource.observe(this, Observer { resource ->
+            btnSongState.setImageResource(resource)
+        })
+    }
+
+    private fun updateUI(nowPlayingMetadata: NowPlayingMetadata) {
+        tvNowPlayingName.text = nowPlayingMetadata.title
+        tvNowPlayingArtist.text = nowPlayingMetadata.subtitle
+        Glide.with(this)
+            .load(nowPlayingMetadata.displayIcon)
+            .placeholder(R.drawable.ic_launcher_foreground)
+            .apply(RequestOptions.circleCropTransform())
+            .into(ivNowPlayingAvatar)
+    }
+
+    private fun initClickListener() {
+        btnSongState.setOnClickListener {
+            mainFragmentViewModel.onClickPlayButton()
+        }
+        rlNowPlaying.setOnClickListener {
+            nowPlayingRootMediaID?.let {
+                val intent = Intent(context, NowPlayingActivity::class.java)
+                val bundle = Bundle()
+                bundle.putString(BUNDLE_MEDIA_ID, it)
+                intent.putExtras(bundle)
+                context?.startActivity(intent)
             }
         }
     }

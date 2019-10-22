@@ -22,9 +22,12 @@ import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.ext.mediasession.TimelineQueueNavigator
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
-import com.truongkhanh.musicapplication.util.*
+import com.truongkhanh.musicapplication.util.BrowseTree
+import com.truongkhanh.musicapplication.util.MUSIC_SERVICE
+import com.truongkhanh.musicapplication.util.NOW_PLAYING_NOTIFICATION
+import com.truongkhanh.musicapplication.util.flag
 
-class MusicService() : MediaBrowserServiceCompat() {
+class MusicService : MediaBrowserServiceCompat() {
 
     private lateinit var mediaSession: MediaSessionCompat
     private lateinit var mediaController: MediaControllerCompat
@@ -47,6 +50,10 @@ class MusicService() : MediaBrowserServiceCompat() {
         }
     }
 
+    private val browseTree: BrowseTree by lazy {
+        BrowseTree(applicationContext, musicSource)
+    }
+
     override fun onLoadChildren(
         parentId: String,
         result: Result<MutableList<MediaItem>>
@@ -58,12 +65,12 @@ class MusicService() : MediaBrowserServiceCompat() {
 
         val results = musicSource.whenReady { success ->
             if (success) {
-                val children = musicSource.map { item ->
+                val children = browseTree[parentId]?.map { item ->
                     MediaItem(
                         item.description,
                         item.flag
                     )
-                }.toMutableList()
+                }?.toMutableList()
                 result.sendResult(children)
             } else {
                 result.sendResult(null)
@@ -94,6 +101,7 @@ class MusicService() : MediaBrowserServiceCompat() {
     }
 
     override fun onDestroy() {
+        removeNowPlayingNotification()
         mediaSession.run {
             isActive = false
             release()
@@ -165,7 +173,7 @@ class MusicService() : MediaBrowserServiceCompat() {
         val updateState = state.state
 
         val notification =
-            if (state.state != PlaybackStateCompat.STATE_NONE && mediaController.metadata != null) {
+            if (updateState != PlaybackStateCompat.STATE_NONE && mediaController.metadata != null) {
                 notificationBuilder.buildNotification(mediaSession.sessionToken)
             } else {
                 null

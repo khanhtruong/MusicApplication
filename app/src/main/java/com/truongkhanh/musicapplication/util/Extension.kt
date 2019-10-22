@@ -11,6 +11,8 @@ import androidx.core.net.toUri
 import com.google.android.exoplayer2.source.ConcatenatingMediaSource
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.upstream.DataSource
+import java.net.URLEncoder
+import java.nio.charset.Charset
 
 inline val PlaybackStateCompat.isPrepare
     get() = (state == PlaybackStateCompat.STATE_BUFFERING) ||
@@ -47,7 +49,7 @@ inline val PlaybackStateCompat.currentPlaybackPosition: Long
         position
     }
 
-inline val MediaMetadataCompat.id: String
+inline val MediaMetadataCompat.id: String?
     get() = getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID)
 
 inline val MediaMetadataCompat.title: String?
@@ -316,6 +318,15 @@ fun List<MediaMetadataCompat>.toMediaSource(
     }
     return concatenatingMediaSource
 }
+
+inline val String?.urlEncoded: String
+    get() = if (Charset.isSupported("UTF-8")) {
+        URLEncoder.encode(this ?: "", "UTF-8")
+    } else {
+        // If UTF-8 is not supported, use the default charset.
+        @Suppress("deprecation")
+        URLEncoder.encode(this ?: "")
+    }
 
 /**
  * Custom property that holds whether an item is [MediaItem.FLAG_BROWSABLE] or

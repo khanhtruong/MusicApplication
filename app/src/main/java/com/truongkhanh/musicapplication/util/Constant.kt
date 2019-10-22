@@ -12,6 +12,10 @@ const val BUNDLE_MEDIA_ID = "bundleMediaID"
 const val BUNDLE_ARTIST = "bundleArtist"
 const val BUNDLE_ALBUM = "bundleAlbum"
 const val BUNDLE_ACTION = "bundleAction"
+const val BUNDLE_FILTER = "bundleFilter"
+
+const val FILTER_ARTIST = "filterArtist"
+const val FILTER_ALBUM = "filterAlbum"
 
 const val COLOR_ACCENT = "#2196F3"
 const val COLOR_LIGHT_GRAY = "#333350"

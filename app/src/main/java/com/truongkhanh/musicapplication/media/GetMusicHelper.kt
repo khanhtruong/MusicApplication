@@ -5,9 +5,9 @@ import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import android.os.Parcel
 import android.os.Parcelable
-import android.support.v4.media.MediaMetadataCompat
 import android.provider.MediaStore
 import android.support.v4.media.MediaDescriptionCompat
+import android.support.v4.media.MediaMetadataCompat
 import androidx.core.net.toUri
 import com.truongkhanh.musicapplication.R
 import com.truongkhanh.musicapplication.util.*
@@ -79,8 +79,7 @@ data class Song(
         parcel.readString(),
         parcel.readString(),
         parcel.readString()
-    ) {
-    }
+    )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(id)
@@ -120,7 +119,6 @@ fun MediaMetadataCompat.Builder.from(context: Context, song: Song): MediaMetadat
         imageBitmap
     }
     displayIconUri = getUriToResource(context, R.drawable.ic_launcher_foreground).toString()
-
 
     song.id?.let {id = it}
     song.artist?.let {
