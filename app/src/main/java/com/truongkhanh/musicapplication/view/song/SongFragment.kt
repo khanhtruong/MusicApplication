@@ -5,22 +5,23 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.truongkhanh.musicapplication.R
 import com.truongkhanh.musicapplication.base.BaseFragment
-import com.truongkhanh.musicapplication.media.Song
 import com.truongkhanh.musicapplication.util.BUNDLE_MEDIA_ID
 import com.truongkhanh.musicapplication.util.getMainFragmentViewModelFactory
 import com.truongkhanh.musicapplication.util.getSongFragmentViewModelFactory
+import com.truongkhanh.musicapplication.util.isNowPlayingVisible
 import com.truongkhanh.musicapplication.view.mainscreen.MainFragmentViewModel
+import com.truongkhanh.musicapplication.view.nowplaying.NowPlayingActivity
 import com.truongkhanh.musicapplication.view.song.adapter.SongAdapter
 import kotlinx.android.synthetic.main.layout_songs.*
 
 class SongFragment : BaseFragment() {
-    private var songs: ArrayList<Song>? = null
     private var songAdapter: SongAdapter? = null
     private lateinit var mainFragmentViewModel: MainFragmentViewModel
     private lateinit var songFragmentViewModel: SongFragmentViewModel
@@ -39,9 +40,22 @@ class SongFragment : BaseFragment() {
     }
 
     override fun setUpView(view: View, savedInstanceState: Bundle?) {
+        if (isNowPlayingVisible)
+            rvSongs.setPadding(0,0,0, 180)
         getData()
         bindingViewModel()
         initRecyclerView()
+        setUpListener()
+    }
+
+    private fun setUpListener() {
+        textChangeListener()
+    }
+
+    private fun textChangeListener() {
+        etSearchSong.addTextChangedListener {
+            songAdapter?.filter?.filter(etSearchSong.text)
+        }
     }
 
     private fun getData() {
@@ -59,8 +73,11 @@ class SongFragment : BaseFragment() {
         mediaID?.let{ bindingSongFragmentViewModel(context, it) }
 
         mainFragmentViewModel.navigateToActivity.observe(this, Observer { event ->
-            event?.getContentIfNotHandled()?.let { activity ->
-                val intent = Intent(context, activity::class.java)
+            event?.getContentIfNotHandled()?.let { mediaID ->
+                val intent = Intent(context, NowPlayingActivity::class.java)
+                val bundle = Bundle()
+                bundle.putString(BUNDLE_MEDIA_ID, mediaID)
+                intent.putExtras(bundle)
                 context.startActivity(intent)
             }
         })
@@ -80,7 +97,7 @@ class SongFragment : BaseFragment() {
         val layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
         rvSongs.layoutManager = layoutManager
         songAdapter = SongAdapter { itemData ->
-            mainFragmentViewModel.mediaItemClick(itemData)
+            mainFragmentViewModel.playByMediaID(itemData.mediaId, mediaID!!)
         }
         rvSongs.adapter = songAdapter
     }

@@ -6,7 +6,7 @@ import androidx.recyclerview.widget.DiffUtil
 data class MediaItemData(
     val mediaId: String,
     val title: String,
-    val subtitle: String,
+    val artist: String,
     val avatarBitmap: Bitmap?,
     val browsable: Boolean,
     val album: String,
@@ -30,7 +30,7 @@ data class MediaItemData(
          * we check both the ID and the playback resource.
          *
          * To calculate the payload, we use the simplest method possible:
-         * - Since the title, subtitle, and albumArtUri are constant (with respect to mediaId),
+         * - Since the title, artist, and albumArtUri are constant (with respect to mediaId),
          *   there's no reason to check if they've changed. If the mediaId is the same, none of
          *   those properties have changed.
          * - If the playback resource (playbackRes) has changed to reflect the change in playback

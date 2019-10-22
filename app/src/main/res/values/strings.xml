@@ -22,4 +22,9 @@
     <string name="duration_format">%d:%02d</string>
 
     <string name="toolbar_tile_now_playing">Now playing</string>
+    <string name="toolbar_title_list_song">List song</string>
+
+    <string name="lbl_all_song_map_key_title">All Song</string>
+    <string name="lbl_artist_map_key_title">Artist</string>
+    <string name="lbl_album_map_key_title">Album</string>
 </resources>

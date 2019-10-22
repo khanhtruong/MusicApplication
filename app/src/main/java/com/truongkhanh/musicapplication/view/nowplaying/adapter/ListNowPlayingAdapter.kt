@@ -1,32 +1,29 @@
-package com.truongkhanh.musicapplication.view.song.adapter
+package com.truongkhanh.musicapplication.view.nowplaying.adapter
 
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Filter
-import android.widget.Filterable
 import androidx.recyclerview.widget.ListAdapter
 import com.bumptech.glide.Glide
 import com.truongkhanh.musicapplication.R
 import com.truongkhanh.musicapplication.model.MediaItemData
-import com.truongkhanh.musicapplication.model.MediaItemData.Companion.PLAYBACK_RES_CHANGED
-import java.util.*
 
-class SongAdapter(private val itemClickListener: (MediaItemData) -> Unit): ListAdapter<MediaItemData, SongViewHolder>(MediaItemData.diffCallback), Filterable {
+class ListNowPlayingAdapter(private val itemClickListener: (Long) -> Unit): ListAdapter<MediaItemData, ListNowPlayingViewHolder>(
+    MediaItemData.diffCallback) {
     private var newCurrentList: MutableList<MediaItemData> = mutableListOf()
 
-    override fun onBindViewHolder(holder: SongViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: ListNowPlayingViewHolder, position: Int) {
         onBindViewHolder(holder, position, mutableListOf())
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SongViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ListNowPlayingViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_song, parent, false)
         newCurrentList = currentList
-        return SongViewHolder(view, itemClickListener)
+        return ListNowPlayingViewHolder(view, itemClickListener)
     }
 
     override fun onBindViewHolder(
-        holder: SongViewHolder,
+        holder: ListNowPlayingViewHolder,
         position: Int,
         payloads: MutableList<Any>
     ) {
@@ -41,7 +38,7 @@ class SongAdapter(private val itemClickListener: (MediaItemData) -> Unit): ListA
         if (payloads.isNotEmpty()) {
             payloads.forEach { payload ->
                 when (payload) {
-                    PLAYBACK_RES_CHANGED -> {
+                    MediaItemData.PLAYBACK_RES_CHANGED -> {
                         Glide.with(holder.itemView)
                             .load(mediaItem.playbackRes)
                             .into(holder.state)
@@ -65,32 +62,6 @@ class SongAdapter(private val itemClickListener: (MediaItemData) -> Unit): ListA
             Glide.with(holder.itemView)
                 .load(mediaItem.playbackRes)
                 .into(holder.state)
-        }
-    }
-
-    override fun getFilter() = object : Filter() {
-        override fun performFiltering(constraint: CharSequence?): FilterResults {
-            val keyWord = constraint.toString()
-            val listFiltered = if (keyWord.isBlank()) {
-                newCurrentList
-            } else {
-                val filterList = mutableListOf<MediaItemData>()
-                newCurrentList.forEach {mediaItemData ->
-                    val string = mediaItemData.title
-                    if (string.toLowerCase(Locale.ROOT).contains(keyWord)) {
-                        filterList.add(mediaItemData)
-                    }
-                }
-                filterList
-            }
-
-            val filterResults = FilterResults()
-            filterResults.values = listFiltered
-            return filterResults
-        }
-
-        override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
-            this@SongAdapter.submitList(results?.values as MutableList<MediaItemData>)
         }
     }
 }

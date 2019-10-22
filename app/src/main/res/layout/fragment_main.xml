@@ -10,38 +10,47 @@
     <FrameLayout
         android:id="@+id/layoutContainer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/navigationMain"/>
+        app:layout_constraintBottom_toTopOf="@+id/rlNowPlaying"/>
 
     <RelativeLayout
         android:id="@+id/rlNowPlaying"
-        app:layout_constraintBottom_toTopOf="@id/navigationMain"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/navigationMain"
         android:gravity="center_vertical"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
+        android:layout_height="wrap_content"
         android:visibility="gone"
         android:background="@color/colorGray"
         >
+        <ImageView
+            android:id="@+id/ivNowPlayingAvatar"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginStart="15dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp"
+            />
         <TextView
-            android:id="@+id/tvSongName"
+            android:id="@+id/tvNowPlayingName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
             android:fontFamily="@font/lato_semibold"
             android:textColor="@color/colorAccent"
             android:textSize="16sp"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="Cong Chua bong bong"
+            android:text="Cong chua bong bong"
             android:layout_centerHorizontal="true"
             />
         <TextView
-            android:id="@+id/tvSongArtist"
+            android:id="@+id/tvNowPlayingArtist"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/tvSongName"
+            android:layout_below="@id/tvNowPlayingName"
             android:textColor="@color/colorAccent"
             style="@style/NormalTextView"
             android:ellipsize="end"
@@ -54,6 +63,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
             android:src="@drawable/ic_play_arrow_black_24dp"
             />
     </RelativeLayout>

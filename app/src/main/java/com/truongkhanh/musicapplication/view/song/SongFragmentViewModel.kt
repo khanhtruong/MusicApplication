@@ -1,7 +1,6 @@
 package com.truongkhanh.musicapplication.view.song
 
 import android.content.Context
-import android.graphics.BitmapFactory
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaBrowserCompat.SubscriptionCallback
 import android.support.v4.media.MediaMetadataCompat
@@ -12,6 +11,7 @@ import com.truongkhanh.musicapplication.media.EMPTY_PLAYBACK_STATE
 import com.truongkhanh.musicapplication.media.MediaSessionConnection
 import com.truongkhanh.musicapplication.media.NOTHING_PLAYING
 import com.truongkhanh.musicapplication.model.MediaItemData
+import com.truongkhanh.musicapplication.util.getSongBitmap
 import com.truongkhanh.musicapplication.util.id
 import com.truongkhanh.musicapplication.util.isPlaying
 
@@ -27,11 +27,7 @@ class SongFragmentViewModel(private val context: Context, private val mediaID: S
         ) {
             super.onChildrenLoaded(parentId, children)
             val itemsList = children.map { child ->
-                val avatarBitmap = if (child.description.iconBitmap != null) {
-                    child.description.iconBitmap
-                } else {
-                    BitmapFactory.decodeResource(context.resources, R.drawable.ic_launcher_foreground)
-                }
+                val avatarBitmap = getSongBitmap(child, context)
                 val subtitle = child.description.subtitle ?: ""
                 MediaItemData(
                     child.mediaId!!,
@@ -72,7 +68,6 @@ class SongFragmentViewModel(private val context: Context, private val mediaID: S
 
     override fun onCleared() {
         super.onCleared()
-
         mediaSessionConnection.playbackState.removeObserver(playbackStateObserver)
         mediaSessionConnection.mediaMetadata.removeObserver(mediaMetadataObserver)
 
@@ -85,12 +80,12 @@ class SongFragmentViewModel(private val context: Context, private val mediaID: S
     ): List<MediaItemData> {
 
         val newResId = when (playbackState.isPlaying) {
-            true -> R.drawable.ic_pause_black_24dp
-            else -> R.drawable.ic_play_arrow_black_24dp
+            true -> R.drawable.ic_play_circle_filled_black_24dp
+            else -> R.drawable.ic_pause_circle_filled_black_24dp
         }
 
         return mediaItems.value?.map {
-            val useResId = if (it.mediaId == mediaMetadata.id) newResId else NO_RES
+            val useResId = if (it.mediaId == mediaMetadata.id) newResId else NO_RESOURCE
             it.copy(playbackRes = useResId)
         } ?: emptyList()
     }
@@ -99,9 +94,9 @@ class SongFragmentViewModel(private val context: Context, private val mediaID: S
         val isActive = mediaId == mediaSessionConnection.mediaMetadata.value?.id
         val isPlaying = mediaSessionConnection.playbackState.value?.isPlaying ?: false
         return when {
-            !isActive -> NO_RES
-            isPlaying -> R.drawable.ic_pause_black_24dp
-            else -> R.drawable.ic_play_arrow_black_24dp
+            !isActive -> NO_RESOURCE
+            isPlaying -> R.drawable.ic_play_circle_filled_black_24dp
+            else -> R.drawable.ic_pause_circle_filled_black_24dp
         }
     }
 
@@ -118,4 +113,4 @@ class SongFragmentViewModel(private val context: Context, private val mediaID: S
     }
 }
 
-private const val NO_RES = 0
+private const val NO_RESOURCE = 0

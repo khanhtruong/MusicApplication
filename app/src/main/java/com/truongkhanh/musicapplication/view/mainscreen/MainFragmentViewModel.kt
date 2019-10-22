@@ -1,7 +1,5 @@
 package com.truongkhanh.musicapplication.view.mainscreen
 
-import android.app.Activity
-import android.os.Bundle
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import androidx.lifecycle.*
@@ -9,10 +7,8 @@ import com.truongkhanh.musicapplication.R
 import com.truongkhanh.musicapplication.media.EMPTY_PLAYBACK_STATE
 import com.truongkhanh.musicapplication.media.MediaSessionConnection
 import com.truongkhanh.musicapplication.media.NOTHING_PLAYING
-import com.truongkhanh.musicapplication.model.MediaItemData
 import com.truongkhanh.musicapplication.model.NowPlayingMetadata
 import com.truongkhanh.musicapplication.util.*
-import com.truongkhanh.musicapplication.view.nowplaying.NowPlayingActivity
 
 class MainFragmentViewModel(mediaSessionConnection: MediaSessionConnection) :
     ViewModel() {
@@ -25,8 +21,8 @@ class MainFragmentViewModel(mediaSessionConnection: MediaSessionConnection) :
                 null
         }
 
-    val navigateToActivity: LiveData<Event<Activity>> get() = _navigateToActivity
-    private val _navigateToActivity = MutableLiveData<Event<Activity>>()
+    val navigateToActivity: LiveData<Event<String>> get() = _navigateToActivity
+    private val _navigateToActivity = MutableLiveData<Event<String>>()
 
     private var playbackState = EMPTY_PLAYBACK_STATE
     var mediaMetadata = MutableLiveData<NowPlayingMetadata>()
@@ -47,19 +43,16 @@ class MainFragmentViewModel(mediaSessionConnection: MediaSessionConnection) :
         it.mediaMetadata.observeForever(mediaMetaDataForever)
     }
 
-    fun mediaItemClick(itemData: MediaItemData) {
-        playMedia(itemData)
-        showFragment(NowPlayingActivity())
+    override fun onCleared() {
+        super.onCleared()
+        mediaSessionConnection.playbackState.removeObserver(playbackStateForever)
+        mediaSessionConnection.mediaMetadata.removeObserver(mediaMetaDataForever)
     }
 
-    fun playMediaBySearch(keyWord: String, action: String) {
-        val transportControls = mediaSessionConnection.transportControls
-        val isPrepared = mediaSessionConnection.playbackState.value?.isPrepare ?: false
-        if (isPrepared) {
-            transportControls.stop()
-        }
-        playMediaFromSearch(keyWord, action)
-        showFragment(NowPlayingActivity())
+    fun playByMediaID(mediaID: String, rootMediaID: String) {
+        playMediaID(mediaID)
+        nowPlayingRootMediaID = rootMediaID
+        showNowPlayingFragment(rootMediaID)
     }
 
     fun onClickPlayButton() {
@@ -70,30 +63,26 @@ class MainFragmentViewModel(mediaSessionConnection: MediaSessionConnection) :
         }
     }
 
-    private fun showFragment(activity: Activity) {
-        _navigateToActivity.value = Event(activity)
+    private fun showNowPlayingFragment(mediaID: String) {
+        _navigateToActivity.value = Event(mediaID)
     }
 
-    private fun playMedia(itemData: MediaItemData) {
+    private fun playMediaID(mediaID: String) {
         val nowPlaying = mediaSessionConnection.mediaMetadata.value
         val transportControls = mediaSessionConnection.transportControls
 
         val isPrepared = mediaSessionConnection.playbackState.value?.isPrepare ?: false
-        if (!(isPrepared && itemData.mediaId == nowPlaying?.id))
-            transportControls.playFromMediaId(itemData.mediaId, null)
-    }
-
-    private fun playMediaFromSearch(artist: String, action: String) {
-        val bundle = Bundle()
-        bundle.putString(BUNDLE_ACTION, action)
-        mediaSessionConnection.transportControls.playFromSearch(artist, bundle)
+        if (!(isPrepared && mediaID == nowPlaying?.id)) {
+            transportControls.stop()
+            transportControls.playFromMediaId(mediaID, null)
+        }
     }
 
     private fun updateState(playbackState: PlaybackStateCompat, mediaMetaData: MediaMetadataCompat) {
         if (mediaMetaData.duration != 0L) {
             val nowPlayingMetadata =
                 NowPlayingMetadata(
-                    mediaMetaData.id,
+                    mediaMetaData.id!!,
                     mediaMetaData.description.iconBitmap,
                     mediaMetaData.title?.trim(),
                     mediaMetaData.displaySubtitle?.trim(),

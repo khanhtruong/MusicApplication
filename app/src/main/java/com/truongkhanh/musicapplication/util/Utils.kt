@@ -3,9 +3,12 @@ package com.truongkhanh.musicapplication.util
 import android.content.ContentResolver
 import android.content.Context
 import android.content.res.Resources
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.net.Uri
+import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import androidx.annotation.AnyRes
 import com.truongkhanh.musicapplication.R
@@ -45,17 +48,25 @@ fun getShuffleColor(shuffleMode: Int): Int {
 fun getRepeatDrawable(repeatMode: Int, context: Context): Drawable {
     return when(repeatMode) {
         PlaybackStateCompat.REPEAT_MODE_ALL -> {
-            context.getDrawable(R.drawable.ic_repeat_one_black_24dp)!!
+            context.getDrawable(R.drawable.ic_repeat_black_24dp)!!
         }
         PlaybackStateCompat.REPEAT_MODE_ONE -> {
-            context.getDrawable(R.drawable.ic_repeat_black_none_24dp)!!
+            context.getDrawable(R.drawable.ic_repeat_one_black_24dp)!!
         }
         else -> {
-            context.getDrawable(R.drawable.ic_repeat_black_24dp)!!
+            context.getDrawable(R.drawable.ic_repeat_black_none_24dp)!!
         }
     }
 }
 
 fun getColor(colorString: String): Int {
     return Color.parseColor(colorString)
+}
+
+fun getSongBitmap(child: MediaBrowserCompat.MediaItem, context: Context): Bitmap? {
+    return if (child.description.iconBitmap != null) {
+        child.description.iconBitmap
+    } else {
+        BitmapFactory.decodeResource(context.resources, R.drawable.ic_launcher_foreground)
+    }
 }
